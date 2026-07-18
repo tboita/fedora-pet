@@ -31,6 +31,10 @@ export default function Peso({ onToast }) {
     }
   }
 
+  function limparForm() {
+    setPesoKg('');
+  }
+
   const dadosGrafico = registros.map(r => ({
     data: formatarData(r.registrado_em),
     peso: Number(r.peso_kg),
@@ -52,7 +56,10 @@ export default function Peso({ onToast }) {
                 onChange={e => setPesoKg(e.target.value)} placeholder="ex: 4.20" required />
             </div>
           </div>
-          <button type="submit" className="btn-primary">Salvar</button>
+          <div className="btn-row">
+            <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
+            <button type="submit" className="btn-primary">Salvar</button>
+          </div>
         </form>
       </div>
 

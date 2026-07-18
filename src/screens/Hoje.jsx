@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Download, Bone, Droplet, PawPrint, Scale, NotebookPen } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { inicioDoDia, fimDoDia, formatarHora, formatarData, statusDose, formatarDataHora, rotuloFrequencia } from '../lib/frequencia';
+import { inicioDoDia, fimDoDia, formatarHora, formatarData, statusDose } from '../lib/frequencia';
 import StampBadge from '../components/StampBadge';
+import { gerarRelatorioPDF } from '../lib/gerarPdf';
 
 export default function Hoje() {
   const [dados, setDados] = useState(null);
@@ -38,8 +40,14 @@ export default function Hoje() {
     return <div className="screen"><p className="empty-state">Carregando relatório do dia…</p></div>;
   }
 
+  const fechadosComida = dados.alimentacao.filter(r => r.quantidade_restante != null);
+  const fechadosAgua = dados.agua.filter(r => r.quantidade_restante != null);
+
   const totalComida = dados.alimentacao.reduce((s, r) => s + Number(r.quantidade_colocada || 0), 0);
+  const totalComidaConsumida = fechadosComida.reduce((s, r) => s + (Number(r.quantidade_colocada) - Number(r.quantidade_restante)), 0);
   const totalAgua = dados.agua.reduce((s, r) => s + Number(r.quantidade_colocada || 0), 0);
+  const totalAguaConsumida = fechadosAgua.reduce((s, r) => s + (Number(r.quantidade_colocada) - Number(r.quantidade_restante)), 0);
+
   const xixis = dados.necessidades.filter(n => n.tipo === 'xixi').length;
   const cocos = dados.necessidades.filter(n => n.tipo === 'coco').length;
   const cocosAnormais = dados.necessidades.filter(n => n.tipo === 'coco' && n.consistencia && n.consistencia !== 'Normal');
@@ -49,58 +57,57 @@ export default function Hoje() {
     return s === 'atrasado' || s === 'proximo';
   });
 
+  function baixarPdf() {
+    gerarRelatorioPDF({ ...dados, totalComida, totalComidaConsumida, totalAgua, totalAguaConsumida });
+  }
+
   return (
     <div className="screen">
-      <div className="card">
-        <p className="card-title">
-          Relatório de hoje
-          <span className="mono">{formatarData(new Date())}</span>
-        </p>
-
-        <div className="dash-item">
-          <div className="dash-item-label">
-            <span className="chip" style={{ background: 'var(--tab-alimentacao)' }} />
-            Alimentação
+      <div className="stat-row">
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'var(--comida-soft)' }}>
+            <Bone size={16} color="var(--comida)" />
           </div>
-          <span className="mono">{totalComida}g · {dados.alimentacao.length}x</span>
+          <div className="stat-value mono">{totalComidaConsumida}g</div>
+          <div className="stat-label">Comeu hoje</div>
         </div>
-
-        <div className="dash-item">
-          <div className="dash-item-label">
-            <span className="chip" style={{ background: 'var(--tab-agua)' }} />
-            Água
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'var(--agua-soft)' }}>
+            <Droplet size={16} color="var(--agua)" />
           </div>
-          <span className="mono">{totalAgua}ml · {dados.agua.length}x</span>
+          <div className="stat-value mono">{totalAguaConsumida}ml</div>
+          <div className="stat-label">Bebeu hoje</div>
         </div>
-
-        <div className="dash-item">
-          <div className="dash-item-label">
-            <span className="chip" style={{ background: 'var(--tab-necessidades)' }} />
-            Xixi / Cocô
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'var(--necessidades-soft)' }}>
+            <PawPrint size={16} color="var(--necessidades)" />
           </div>
-          <span className="mono">💧{xixis} · 💩{cocos}</span>
+          <div className="stat-value mono">💧{xixis} · 💩{cocos}</div>
+          <div className="stat-label">Xixi / Cocô</div>
         </div>
-
-        <div className="dash-item">
-          <div className="dash-item-label">
-            <span className="chip" style={{ background: 'var(--tab-peso)' }} />
-            Peso mais recente
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'var(--peso-soft)' }}>
+            <Scale size={16} color="var(--peso)" />
           </div>
-          <span className="mono">{dados.peso ? `${dados.peso.peso_kg}kg` : '—'}</span>
-        </div>
-
-        <div className="dash-item">
-          <div className="dash-item-label">
-            <span className="chip" style={{ background: 'var(--tab-comportamento)' }} />
-            Notas de comportamento
-          </div>
-          <span className="mono">{dados.comportamento.length}</span>
+          <div className="stat-value mono">{dados.peso ? `${dados.peso.peso_kg}kg` : '—'}</div>
+          <div className="stat-label">Peso recente</div>
         </div>
       </div>
 
+      <div className="card">
+        <p className="card-title">
+          Relatório de hoje
+          <span className="card-title-meta">{formatarData(new Date())}</span>
+        </p>
+        <button className="btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+          onClick={baixarPdf}>
+          <Download size={16} /> Baixar PDF do dia
+        </button>
+      </div>
+
       {cocosAnormais.length > 0 && (
-        <div className="card" style={{ borderColor: 'var(--rust-soft)' }}>
-          <p className="card-title" style={{ color: 'var(--rust)' }}>⚠ Cocô fora do normal hoje</p>
+        <div className="card" style={{ borderColor: 'var(--remedios-soft)', background: 'var(--remedios-soft)' }}>
+          <p className="card-title" style={{ color: '#D6284A' }}>⚠ Cocô fora do normal hoje</p>
           <div className="entry-list">
             {cocosAnormais.map(c => (
               <div key={c.id} className="entry-row">
@@ -122,9 +129,9 @@ export default function Hoje() {
               const status = statusDose(m.proxima_dose);
               return (
                 <div key={m.id} className="entry-row">
-                  <span style={{ fontWeight: 600 }}>{m.nome}</span>
+                  <span style={{ fontWeight: 700 }}>{m.nome}</span>
                   {status === 'sem-registro' ? (
-                    <span className="mono" style={{ fontSize: 12, color: 'var(--ink-soft)' }}>sem registro</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600 }}>sem registro</span>
                   ) : (
                     <StampBadge status={status}>
                       {status === 'atrasado' ? 'Atrasado' : status === 'proximo' ? 'Em breve' : 'Em dia'}
@@ -136,7 +143,7 @@ export default function Hoje() {
           </div>
         )}
         {medsPendentes.length > 0 && (
-          <p style={{ fontSize: 12, color: 'var(--rust)', marginTop: 10, marginBottom: 0 }}>
+          <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 10, marginBottom: 0, fontWeight: 600 }}>
             {medsPendentes.length} dose(s) atrasada(s) ou próxima(s) do vencimento.
           </p>
         )}
@@ -144,7 +151,7 @@ export default function Hoje() {
 
       {dados.comportamento.length > 0 && (
         <div className="card">
-          <p className="card-title">Notas de hoje</p>
+          <p className="card-title"><NotebookPen size={15} style={{ marginRight: 6 }} />Notas de hoje</p>
           <div className="entry-list">
             {dados.comportamento.map(c => (
               <div key={c.id} className="entry-row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 4 }}>

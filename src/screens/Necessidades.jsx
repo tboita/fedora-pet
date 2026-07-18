@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Droplets, PawPrint } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { formatarHora, inicioDoDia, fimDoDia } from '../lib/frequencia';
 
@@ -25,6 +26,12 @@ export default function Necessidades({ onToast }) {
 
   useEffect(() => { carregar(); }, []);
 
+  function limparForm() {
+    setTipo('xixi');
+    setConsistencia('');
+    setObs('');
+  }
+
   async function salvar(e) {
     e.preventDefault();
     const { error } = await supabase.from('necessidades').insert({
@@ -33,7 +40,7 @@ export default function Necessidades({ onToast }) {
       observacoes: obs || null,
     });
     if (!error) {
-      setConsistencia(''); setObs('');
+      limparForm();
       onToast?.('Registrado');
       carregar();
     }
@@ -46,26 +53,41 @@ export default function Necessidades({ onToast }) {
 
   return (
     <div className="screen">
+      <div className="stat-row">
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'var(--agua-soft)' }}>
+            <Droplets size={16} color="var(--agua)" />
+          </div>
+          <div className="stat-value mono">{contagem.xixi || 0}</div>
+          <div className="stat-label">Xixi hoje</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'var(--necessidades-soft)' }}>
+            <PawPrint size={16} color="var(--necessidades)" />
+          </div>
+          <div className="stat-value mono">{contagem.coco || 0}</div>
+          <div className="stat-label">Cocô hoje</div>
+        </div>
+      </div>
+
       <div className="card">
         <p className="card-title">Registrar</p>
         <form onSubmit={salvar}>
-          <div className="field-row">
+          <div className="btn-row" style={{ marginBottom: 12 }}>
             <button type="button"
-              className={tipo === 'xixi' ? 'btn-primary' : 'btn-ghost'}
-              style={{ flex: 1 }}
+              className={`btn-toggle ${tipo === 'xixi' ? 'active' : ''}`}
               onClick={() => setTipo('xixi')}>
               💧 Xixi
             </button>
             <button type="button"
-              className={tipo === 'coco' ? 'btn-primary' : 'btn-ghost'}
-              style={{ flex: 1 }}
+              className={`btn-toggle ${tipo === 'coco' ? 'active' : ''}`}
               onClick={() => setTipo('coco')}>
               💩 Cocô
             </button>
           </div>
 
           {tipo === 'coco' && (
-            <div className="field" style={{ marginBottom: 10 }}>
+            <div className="field" style={{ marginBottom: 12 }}>
               <label>Consistência</label>
               <select value={consistencia} onChange={e => setConsistencia(e.target.value)}>
                 <option value="">Selecionar</option>
@@ -74,19 +96,19 @@ export default function Necessidades({ onToast }) {
             </div>
           )}
 
-          <div className="field" style={{ marginBottom: 10 }}>
+          <div className="field" style={{ marginBottom: 12 }}>
             <label>Observações</label>
             <textarea value={obs} onChange={e => setObs(e.target.value)} placeholder="opcional" />
           </div>
-          <button type="submit" className="btn-primary">Salvar</button>
+          <div className="btn-row">
+            <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
+            <button type="submit" className="btn-primary">Salvar</button>
+          </div>
         </form>
       </div>
 
       <div className="card">
-        <p className="card-title">
-          Hoje
-          <span className="mono">💧 {contagem.xixi || 0} · 💩 {contagem.coco || 0}</span>
-        </p>
+        <p className="card-title">Histórico de hoje</p>
         {carregando ? (
           <p className="empty-state">Carregando…</p>
         ) : registros.length === 0 ? (

@@ -31,6 +31,10 @@ export default function Comportamento({ onToast }) {
     }
   }
 
+  function limparForm() {
+    setNota('');
+  }
+
   return (
     <div className="screen">
       <div className="card">
@@ -41,7 +45,10 @@ export default function Comportamento({ onToast }) {
             <textarea value={nota} onChange={e => setNota(e.target.value)}
               placeholder="ex: agitada à tarde, recusou comida no jantar…" required />
           </div>
-          <button type="submit" className="btn-primary">Salvar</button>
+          <div className="btn-row">
+            <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
+            <button type="submit" className="btn-primary">Salvar</button>
+          </div>
         </form>
       </div>
 

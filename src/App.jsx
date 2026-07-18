@@ -38,8 +38,13 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="brand-header">
-        <h1>Fedora</h1>
-        <span className="brand-sub">caderneta de cuidados</span>
+        <div className="brand-left">
+          <div className="brand-avatar">F</div>
+          <div>
+            <h1>Fedora</h1>
+            <div className="brand-sub">painel de cuidados</div>
+          </div>
+        </div>
       </header>
 
       {aba === 'hoje' && <Hoje />}

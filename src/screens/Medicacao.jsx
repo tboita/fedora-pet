@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Check, X } from 'lucide-react';
+import { Plus, Check, X, Pill } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { calcularProximaDose, statusDose, formatarDataHora, rotuloFrequencia } from '../lib/frequencia';
 import StampBadge from '../components/StampBadge';
@@ -27,6 +27,11 @@ export default function Medicacao({ onToast }) {
 
   useEffect(() => { carregar(); }, []);
 
+  function limparForm() {
+    setNome(''); setDose(''); setFrequencia('diario'); setHorario('08:00');
+    setMostrarForm(false);
+  }
+
   async function criarMedicamento(e) {
     e.preventDefault();
     if (!nome) return;
@@ -38,8 +43,7 @@ export default function Medicacao({ onToast }) {
       proxima_dose: null,
     });
     if (!error) {
-      setNome(''); setDose(''); setFrequencia('diario'); setHorario('08:00');
-      setMostrarForm(false);
+      limparForm();
       onToast?.('Medicamento cadastrado');
       carregar();
     }
@@ -62,8 +66,27 @@ export default function Medicacao({ onToast }) {
     carregar();
   }
 
+  const atrasados = medicamentos.filter(m => statusDose(m.proxima_dose) === 'atrasado').length;
+
   return (
     <div className="screen">
+      <div className="stat-row">
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'var(--remedios-soft)' }}>
+            <Pill size={16} color="var(--remedios)" />
+          </div>
+          <div className="stat-value mono">{medicamentos.length}</div>
+          <div className="stat-label">Ativos</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'var(--remedios-soft)' }}>
+            <Pill size={16} color="var(--remedios)" />
+          </div>
+          <div className="stat-value mono">{atrasados}</div>
+          <div className="stat-label">Atrasados</div>
+        </div>
+      </div>
+
       <div className="card">
         <p className="card-title">
           Medicamentos ativos
@@ -99,7 +122,10 @@ export default function Medicacao({ onToast }) {
                 <input type="time" value={horario} onChange={e => setHorario(e.target.value)} />
               </div>
             )}
-            <button type="submit" className="btn-primary">Cadastrar</button>
+            <div className="btn-row">
+              <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
+              <button type="submit" className="btn-primary">Cadastrar</button>
+            </div>
           </form>
         )}
 

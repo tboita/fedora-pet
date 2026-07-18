@@ -1,13 +1,13 @@
 import { Home, Bone, Droplet, PawPrint, Pill, Scale, NotebookPen } from 'lucide-react';
 
 const TABS = [
-  { id: 'hoje', label: 'Hoje', icon: Home, color: 'var(--pine)' },
-  { id: 'alimentacao', label: 'Comida', icon: Bone, color: 'var(--tab-alimentacao)' },
-  { id: 'agua', label: 'Água', icon: Droplet, color: 'var(--tab-agua)' },
-  { id: 'necessidades', label: 'Xixi/Cocô', icon: PawPrint, color: 'var(--tab-necessidades)' },
-  { id: 'medicacao', label: 'Remédios', icon: Pill, color: 'var(--tab-medicacao)' },
-  { id: 'peso', label: 'Peso', icon: Scale, color: 'var(--tab-peso)' },
-  { id: 'comportamento', label: 'Notas', icon: NotebookPen, color: 'var(--tab-comportamento)' },
+  { id: 'hoje', label: 'Hoje', icon: Home, color: 'var(--primary)' },
+  { id: 'alimentacao', label: 'Comida', icon: Bone, color: 'var(--comida)' },
+  { id: 'agua', label: 'Água', icon: Droplet, color: 'var(--agua)' },
+  { id: 'necessidades', label: 'Xixi/Cocô', icon: PawPrint, color: 'var(--necessidades)' },
+  { id: 'medicacao', label: 'Remédios', icon: Pill, color: 'var(--remedios)' },
+  { id: 'peso', label: 'Peso', icon: Scale, color: 'var(--peso)' },
+  { id: 'comportamento', label: 'Notas', icon: NotebookPen, color: 'var(--notas)' },
 ];
 
 export default function TabBar({ ativa, onChange }) {
@@ -21,9 +21,10 @@ export default function TabBar({ ativa, onChange }) {
           onClick={() => onChange(id)}
           aria-current={ativa === id ? 'page' : undefined}
         >
-          <Icon size={18} strokeWidth={ativa === id ? 2.4 : 1.8} />
+          <span className="icon-wrap">
+            <Icon size={15} strokeWidth={2.2} color={ativa === id ? '#fff' : 'currentColor'} />
+          </span>
           <span>{label}</span>
-          <span className="dot" />
         </button>
       ))}
     </nav>
