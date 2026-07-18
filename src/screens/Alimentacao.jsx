@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bone, Check } from 'lucide-react';
+import { Bone, Check, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { formatarHora, inicioDoDia, fimDoDia } from '../lib/frequencia';
 
@@ -53,6 +53,15 @@ export default function Alimentacao({ onToast }) {
     if (!error) {
       setSobraInputs(prev => ({ ...prev, [id]: undefined }));
       onToast?.('Sobra registrada');
+      carregar();
+    }
+  }
+
+  async function excluir(id) {
+    if (!window.confirm('Excluir este registro?')) return;
+    const { error } = await supabase.from('alimentacao').delete().eq('id', id);
+    if (!error) {
+      onToast?.('Registro excluído');
       carregar();
     }
   }
@@ -120,6 +129,9 @@ export default function Alimentacao({ onToast }) {
                   onClick={() => registrarSobra(r.id)}>
                   <Check size={16} />
                 </button>
+                <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
+                  <Trash2 size={16} />
+                </button>
               </div>
             </div>
           ))}
@@ -137,12 +149,15 @@ export default function Alimentacao({ onToast }) {
             {registros.map(r => (
               <div key={r.id} className="entry-row">
                 <span className="entry-time">{formatarHora(r.registrado_em)}</span>
-                <span className="mono">
+                <span className="mono" style={{ flex: 1, marginLeft: 10 }}>
                   {r.quantidade_colocada}g colocados
                   {r.quantidade_restante != null
                     ? ` · comeu ${(r.quantidade_colocada - r.quantidade_restante).toFixed(0)}g`
                     : ' · aguardando sobra'}
                 </span>
+                <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
+                  <Trash2 size={14} />
+                </button>
               </div>
             ))}
           </div>

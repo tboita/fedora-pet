@@ -368,6 +368,23 @@ button:active { transform: scale(0.97); }
 
 .empty-state { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 24px 0; }
 
+.btn-icon-danger {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.btn-icon-danger:hover {
+  color: var(--danger);
+  background: var(--remedios-soft);
+}
+
 .toast {
   position: fixed;
   bottom: 100px;

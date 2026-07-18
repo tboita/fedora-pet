@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { formatarDataHora } from '../lib/frequencia';
 
@@ -35,6 +36,15 @@ export default function Comportamento({ onToast }) {
     setNota('');
   }
 
+  async function excluir(id) {
+    if (!window.confirm('Excluir esta nota?')) return;
+    const { error } = await supabase.from('comportamento').delete().eq('id', id);
+    if (!error) {
+      onToast?.('Nota excluída');
+      carregar();
+    }
+  }
+
   return (
     <div className="screen">
       <div className="card">
@@ -62,7 +72,12 @@ export default function Comportamento({ onToast }) {
           <div className="entry-list">
             {registros.map(r => (
               <div key={r.id} className="entry-row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 4 }}>
-                <span className="entry-time">{formatarDataHora(r.registrado_em)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                  <span className="entry-time">{formatarDataHora(r.registrado_em)}</span>
+                  <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
                 <span>{r.observacoes}</span>
               </div>
             ))}

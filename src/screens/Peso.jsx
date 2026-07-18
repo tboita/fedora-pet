@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { supabase } from '../lib/supabaseClient';
 import { formatarData } from '../lib/frequencia';
@@ -35,6 +36,15 @@ export default function Peso({ onToast }) {
     setPesoKg('');
   }
 
+  async function excluir(id) {
+    if (!window.confirm('Excluir este registro de peso?')) return;
+    const { error } = await supabase.from('peso').delete().eq('id', id);
+    if (!error) {
+      onToast?.('Registro excluído');
+      carregar();
+    }
+  }
+
   const dadosGrafico = registros.map(r => ({
     data: formatarData(r.registrado_em),
     peso: Number(r.peso_kg),
@@ -67,7 +77,7 @@ export default function Peso({ onToast }) {
         <p className="card-title">
           Evolução
           {variacao != null && (
-            <span className="mono" style={{ color: variacao > 0 ? 'var(--olive)' : variacao < 0 ? 'var(--rust)' : 'var(--ink-soft)' }}>
+            <span className="mono" style={{ color: variacao > 0 ? 'var(--necessidades)' : variacao < 0 ? 'var(--remedios)' : 'var(--ink-soft)' }}>
               {variacao > 0 ? '+' : ''}{variacao}kg desde o último
             </span>
           )}
@@ -80,11 +90,11 @@ export default function Peso({ onToast }) {
           <div style={{ height: 180 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dadosGrafico}>
-                <CartesianGrid stroke="var(--paper-line)" strokeDasharray="3 3" />
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
                 <XAxis dataKey="data" tick={{ fontSize: 10 }} stroke="var(--ink-soft)" />
                 <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10 }} stroke="var(--ink-soft)" />
                 <Tooltip />
-                <Line type="monotone" dataKey="peso" stroke="var(--plum)" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="peso" stroke="#A15FFF" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -98,7 +108,10 @@ export default function Peso({ onToast }) {
             {[...registros].reverse().slice(0, 10).map(r => (
               <div key={r.id} className="entry-row">
                 <span className="entry-time">{formatarData(r.registrado_em)}</span>
-                <span className="mono">{r.peso_kg}kg</span>
+                <span className="mono" style={{ flex: 1, marginLeft: 10 }}>{r.peso_kg}kg</span>
+                <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
+                  <Trash2 size={14} />
+                </button>
               </div>
             ))}
           </div>

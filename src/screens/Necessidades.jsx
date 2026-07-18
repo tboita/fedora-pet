@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Droplets, PawPrint } from 'lucide-react';
+import { Droplets, PawPrint, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { formatarHora, inicioDoDia, fimDoDia } from '../lib/frequencia';
 
@@ -42,6 +42,15 @@ export default function Necessidades({ onToast }) {
     if (!error) {
       limparForm();
       onToast?.('Registrado');
+      carregar();
+    }
+  }
+
+  async function excluir(id) {
+    if (!window.confirm('Excluir este registro?')) return;
+    const { error } = await supabase.from('necessidades').delete().eq('id', id);
+    if (!error) {
+      onToast?.('Registro excluído');
       carregar();
     }
   }
@@ -118,10 +127,13 @@ export default function Necessidades({ onToast }) {
             {registros.map(r => (
               <div key={r.id} className="entry-row">
                 <span className="entry-time">{formatarHora(r.registrado_em)}</span>
-                <span>
+                <span style={{ flex: 1, marginLeft: 10 }}>
                   {r.tipo === 'xixi' ? '💧 Xixi' : '💩 Cocô'}
                   {r.consistencia ? ` · ${r.consistencia}` : ''}
                 </span>
+                <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
+                  <Trash2 size={14} />
+                </button>
               </div>
             ))}
           </div>
