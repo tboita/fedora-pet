@@ -125,11 +125,16 @@ export default function Necessidades({ onToast }) {
         ) : (
           <div className="entry-list">
             {registros.map(r => (
-              <div key={r.id} className="entry-row">
+              <div key={r.id} className="entry-row" style={{ alignItems: 'flex-start' }}>
                 <span className="entry-time">{formatarHora(r.registrado_em)}</span>
                 <span style={{ flex: 1, marginLeft: 10 }}>
                   {r.tipo === 'xixi' ? '💧 Xixi' : '💩 Cocô'}
                   {r.consistencia ? ` · ${r.consistencia}` : ''}
+                  {r.observacoes && (
+                    <span style={{ display: 'block', fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
+                      {r.observacoes}
+                    </span>
+                  )}
                 </span>
                 <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
                   <Trash2 size={14} />

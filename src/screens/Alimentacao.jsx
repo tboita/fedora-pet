@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bone, Check, Trash2 } from 'lucide-react';
+import { Fish, Check, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { formatarHora, inicioDoDia, fimDoDia } from '../lib/frequencia';
 
@@ -76,14 +76,14 @@ export default function Alimentacao({ onToast }) {
       <div className="stat-row">
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--comida-soft)' }}>
-            <Bone size={16} color="var(--comida)" />
+            <Fish size={16} color="var(--comida)" />
           </div>
           <div className="stat-value mono">{totalConsumido}g</div>
           <div className="stat-label">Comido hoje</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--comida-soft)' }}>
-            <Bone size={16} color="var(--comida)" />
+            <Fish size={16} color="var(--comida)" />
           </div>
           <div className="stat-value mono">{totalColocado}g</div>
           <div className="stat-label">Colocado hoje</div>
@@ -147,13 +147,18 @@ export default function Alimentacao({ onToast }) {
         ) : (
           <div className="entry-list">
             {registros.map(r => (
-              <div key={r.id} className="entry-row">
+              <div key={r.id} className="entry-row" style={{ alignItems: 'flex-start' }}>
                 <span className="entry-time">{formatarHora(r.registrado_em)}</span>
                 <span className="mono" style={{ flex: 1, marginLeft: 10 }}>
                   {r.quantidade_colocada}g colocados
                   {r.quantidade_restante != null
                     ? ` · comeu ${(r.quantidade_colocada - r.quantidade_restante).toFixed(0)}g`
                     : ' · aguardando sobra'}
+                  {r.observacoes && (
+                    <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
+                      {r.observacoes}
+                    </span>
+                  )}
                 </span>
                 <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
                   <Trash2 size={14} />

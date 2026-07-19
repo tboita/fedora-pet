@@ -1,8 +1,8 @@
-import { Home, Bone, Droplet, PawPrint, Pill, Scale, NotebookPen } from 'lucide-react';
+import { Home, Fish, Droplet, PawPrint, Pill, Scale, NotebookPen } from 'lucide-react';
 
 const TABS = [
   { id: 'hoje', label: 'Hoje', icon: Home, color: 'var(--primary)' },
-  { id: 'alimentacao', label: 'Comida', icon: Bone, color: 'var(--comida)' },
+  { id: 'alimentacao', label: 'Comida', icon: Fish, color: 'var(--comida)' },
   { id: 'agua', label: 'Água', icon: Droplet, color: 'var(--agua)' },
   { id: 'necessidades', label: 'Xixi/Cocô', icon: PawPrint, color: 'var(--necessidades)' },
   { id: 'medicacao', label: 'Remédios', icon: Pill, color: 'var(--remedios)' },

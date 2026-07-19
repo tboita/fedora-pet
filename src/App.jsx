@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Cat } from 'lucide-react';
 import TabBar from './components/TabBar';
 import Hoje from './screens/Hoje';
 import Alimentacao from './screens/Alimentacao';
@@ -39,7 +40,7 @@ export default function App() {
     <div className="app-shell">
       <header className="brand-header">
         <div className="brand-left">
-          <div className="brand-avatar">F</div>
+          <div className="brand-avatar"><Cat size={22} /></div>
           <div>
             <h1>Fedora</h1>
             <div className="brand-sub">painel de cuidados</div>

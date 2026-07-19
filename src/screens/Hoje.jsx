@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, Bone, Droplet, PawPrint, Scale, NotebookPen } from 'lucide-react';
+import { Download, Fish, Droplet, PawPrint, Scale, NotebookPen } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { inicioDoDia, fimDoDia, formatarHora, formatarData, statusDose } from '../lib/frequencia';
 import StampBadge from '../components/StampBadge';
@@ -66,7 +66,7 @@ export default function Hoje() {
       <div className="stat-row">
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--comida-soft)' }}>
-            <Bone size={16} color="var(--comida)" />
+            <Fish size={16} color="var(--comida)" />
           </div>
           <div className="stat-value mono">{totalComidaConsumida}g</div>
           <div className="stat-label">Comeu hoje</div>

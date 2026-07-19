@@ -13,6 +13,7 @@ export default function Medicacao({ onToast }) {
   const [dose, setDose] = useState('');
   const [frequencia, setFrequencia] = useState('diario');
   const [horario, setHorario] = useState('08:00');
+  const [obsMedicamento, setObsMedicamento] = useState('');
 
   async function carregar() {
     setCarregando(true);
@@ -28,7 +29,7 @@ export default function Medicacao({ onToast }) {
   useEffect(() => { carregar(); }, []);
 
   function limparForm() {
-    setNome(''); setDose(''); setFrequencia('diario'); setHorario('08:00');
+    setNome(''); setDose(''); setFrequencia('diario'); setHorario('08:00'); setObsMedicamento('');
     setMostrarForm(false);
   }
 
@@ -41,6 +42,7 @@ export default function Medicacao({ onToast }) {
       frequencia,
       horario_padrao: frequencia === 'diario' ? horario : null,
       proxima_dose: null,
+      observacoes: obsMedicamento || null,
     });
     if (!error) {
       limparForm();
@@ -97,7 +99,7 @@ export default function Medicacao({ onToast }) {
         </p>
 
         {mostrarForm && (
-          <form onSubmit={criarMedicamento} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px dashed var(--paper-line)' }}>
+          <form onSubmit={criarMedicamento} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px solid var(--border)' }}>
             <div className="field" style={{ marginBottom: 10 }}>
               <label>Nome do remédio</label>
               <input value={nome} onChange={e => setNome(e.target.value)} placeholder="ex: Amoxicilina" required />
@@ -122,6 +124,10 @@ export default function Medicacao({ onToast }) {
                 <input type="time" value={horario} onChange={e => setHorario(e.target.value)} />
               </div>
             )}
+            <div className="field" style={{ marginBottom: 10 }}>
+              <label>Observações</label>
+              <textarea value={obsMedicamento} onChange={e => setObsMedicamento(e.target.value)} placeholder="opcional" />
+            </div>
             <div className="btn-row">
               <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
               <button type="submit" className="btn-primary">Cadastrar</button>
@@ -144,6 +150,9 @@ export default function Medicacao({ onToast }) {
                     <div className="mono" style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
                       {med.dose ? `${med.dose} · ` : ''}{rotuloFrequencia[med.frequencia]}
                     </div>
+                    {med.observacoes && (
+                      <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4 }}>{med.observacoes}</div>
+                    )}
                     <div style={{ marginTop: 6 }}>
                       {status === 'sem-registro' ? (
                         <span className="mono" style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
@@ -158,11 +167,11 @@ export default function Medicacao({ onToast }) {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => marcarComoDado(med)} className="btn-ghost" style={{ padding: 8 }} title="Marcar como dado">
-                      <Check size={16} color="var(--pine)" />
+                    <button onClick={() => marcarComoDado(med)} className="btn-icon-success" title="Marcar como dado">
+                      <Check size={16} />
                     </button>
-                    <button onClick={() => desativar(med.id)} className="btn-ghost" style={{ padding: 8 }} title="Remover">
-                      <X size={16} color="var(--rust)" />
+                    <button onClick={() => desativar(med.id)} className="btn-icon-remove" title="Remover">
+                      <X size={16} />
                     </button>
                   </div>
                 </div>

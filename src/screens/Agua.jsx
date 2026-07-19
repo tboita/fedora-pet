@@ -147,13 +147,18 @@ export default function Agua({ onToast }) {
         ) : (
           <div className="entry-list">
             {registros.map(r => (
-              <div key={r.id} className="entry-row">
+              <div key={r.id} className="entry-row" style={{ alignItems: 'flex-start' }}>
                 <span className="entry-time">{formatarHora(r.registrado_em)}</span>
                 <span className="mono" style={{ flex: 1, marginLeft: 10 }}>
                   {r.quantidade_colocada}ml colocados
                   {r.quantidade_restante != null
                     ? ` · bebeu ${(r.quantidade_colocada - r.quantidade_restante).toFixed(0)}ml`
                     : ' · aguardando sobra'}
+                  {r.observacoes && (
+                    <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
+                      {r.observacoes}
+                    </span>
+                  )}
                 </span>
                 <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
                   <Trash2 size={14} />

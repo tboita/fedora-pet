@@ -385,6 +385,30 @@ button:active { transform: scale(0.97); }
   background: var(--remedios-soft);
 }
 
+.btn-icon-success {
+  background: var(--necessidades-soft);
+  border: none;
+  color: var(--ok);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.btn-icon-remove {
+  background: var(--remedios-soft);
+  border: none;
+  color: var(--danger);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
 .toast {
   position: fixed;
   bottom: 100px;
