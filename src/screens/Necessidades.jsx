@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Droplets, PawPrint, Trash2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { formatarHora, inicioDoDia, fimDoDia } from '../lib/frequencia';
+import { formatarHora, inicioDoDia, fimDoDia, chaveDia, diasAtras, formatarDataCurta } from '../lib/frequencia';
+import { faixaXixiIdeal, faixaCocoIdeal, statusFaixa } from '../lib/referencias';
 import DateNav from '../components/DateNav';
+import TendenciaChart from '../components/TendenciaChart';
+import ComparativoIdeal from '../components/ComparativoIdeal';
 
 const CONSISTENCIAS = ['Normal', 'Mole', 'Dura', 'Diarreia', 'Com sangue'];
 
@@ -19,6 +22,34 @@ export default function Necessidades({ onToast }) {
   const [carregando, setCarregando] = useState(true);
   const [editandoId, setEditandoId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [tendenciaXixi, setTendenciaXixi] = useState([]);
+  const [tendenciaCoco, setTendenciaCoco] = useState([]);
+
+  async function carregarTendencia() {
+    const { data } = await supabase.from('necessidades').select('*')
+      .gte('registrado_em', diasAtras(13).toISOString())
+      .order('registrado_em', { ascending: true });
+
+    if (data) {
+      const xixiPorDia = {};
+      const cocoPorDia = {};
+      data.forEach(r => {
+        const chave = chaveDia(r.registrado_em);
+        if (r.tipo === 'xixi') xixiPorDia[chave] = (xixiPorDia[chave] || 0) + 1;
+        if (r.tipo === 'coco') cocoPorDia[chave] = (cocoPorDia[chave] || 0) + 1;
+      });
+      const diasXixi = [];
+      const diasCoco = [];
+      for (let i = 13; i >= 0; i--) {
+        const d = diasAtras(i);
+        const chave = chaveDia(d);
+        diasXixi.push({ data: formatarDataCurta(d), valor: xixiPorDia[chave] || 0 });
+        diasCoco.push({ data: formatarDataCurta(d), valor: cocoPorDia[chave] || 0 });
+      }
+      setTendenciaXixi(diasXixi);
+      setTendenciaCoco(diasCoco);
+    }
+  }
 
   async function carregar() {
     setCarregando(true);
@@ -34,6 +65,7 @@ export default function Necessidades({ onToast }) {
   }
 
   useEffect(() => { carregar(); }, [dataSelecionada]);
+  useEffect(() => { carregarTendencia(); }, []);
 
   function limparForm() {
     setTipo('xixi');
@@ -122,6 +154,37 @@ export default function Necessidades({ onToast }) {
           <div className="stat-value mono">{contagem.coco || 0}</div>
           <div className="stat-label">Cocô</div>
         </div>
+      </div>
+
+      <div className="card">
+        <p className="card-title">Comparado ao ideal</p>
+        <ComparativoIdeal
+          titulo="Xixi hoje"
+          valorReal={contagem.xixi || 0}
+          unidade="x"
+          faixa={faixaXixiIdeal}
+          status={statusFaixa(contagem.xixi || 0, faixaXixiIdeal)}
+        />
+        <ComparativoIdeal
+          titulo="Cocô hoje"
+          valorReal={contagem.coco || 0}
+          unidade="x"
+          faixa={faixaCocoIdeal}
+          status={statusFaixa(contagem.coco || 0, faixaCocoIdeal)}
+        />
+        <p style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 4 }}>
+          Faixas gerais de referência veterinária (não dependem do peso). Menos de 2 xixis por dia pode indicar baixa ingestão de líquidos.
+        </p>
+      </div>
+
+      <div className="card">
+        <p className="card-title">Tendência de xixi (14 dias)</p>
+        <TendenciaChart dados={tendenciaXixi} cor="#64B5F6" />
+      </div>
+
+      <div className="card">
+        <p className="card-title">Tendência de cocô (14 dias)</p>
+        <TendenciaChart dados={tendenciaCoco} cor="#7FDBA1" />
       </div>
 
       {visualizandoHoje ? (

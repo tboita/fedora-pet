@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { Download, Fish, Droplet, PawPrint, Scale, NotebookPen } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { inicioDoDia, fimDoDia, formatarHora, formatarData, statusDose } from '../lib/frequencia';
+import { faixaAguaIdeal, faixaRacaoSecaIdeal, faixaXixiIdeal, faixaCocoIdeal, statusFaixa } from '../lib/referencias';
 import StampBadge from '../components/StampBadge';
 import DateNav from '../components/DateNav';
+import ComparativoIdeal from '../components/ComparativoIdeal';
 import { gerarRelatorioPDF } from '../lib/gerarPdf';
 
 export default function Hoje() {
@@ -115,6 +117,47 @@ export default function Hoje() {
           onClick={baixarPdf}>
           <Download size={16} /> Baixar PDF deste dia
         </button>
+      </div>
+
+      <div className="card">
+        <p className="card-title">Consumo x ideal (baseado no peso)</p>
+        {dados.peso ? (
+          <>
+            <ComparativoIdeal
+              titulo="Ração seca"
+              valorReal={totalSecaConsumida}
+              unidade="g"
+              faixa={faixaRacaoSecaIdeal(dados.peso.peso_kg)}
+              status={statusFaixa(totalSecaConsumida, faixaRacaoSecaIdeal(dados.peso.peso_kg))}
+            />
+            <ComparativoIdeal
+              titulo="Água"
+              valorReal={totalAguaConsumida}
+              unidade="ml"
+              faixa={faixaAguaIdeal(dados.peso.peso_kg)}
+              status={statusFaixa(totalAguaConsumida, faixaAguaIdeal(dados.peso.peso_kg))}
+            />
+            <ComparativoIdeal
+              titulo="Xixi"
+              valorReal={xixis}
+              unidade="x"
+              faixa={faixaXixiIdeal}
+              status={statusFaixa(xixis, faixaXixiIdeal)}
+            />
+            <ComparativoIdeal
+              titulo="Cocô"
+              valorReal={cocos}
+              unidade="x"
+              faixa={faixaCocoIdeal}
+              status={statusFaixa(cocos, faixaCocoIdeal)}
+            />
+            <p style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 4 }}>
+              Estimativas gerais baseadas em referências veterinárias. Não substituem orientação individual — em caso de dúvida, consulte o veterinário da Fedora.
+            </p>
+          </>
+        ) : (
+          <p className="empty-state">Registre o peso da Fedora na aba Peso pra ver o comparativo com o ideal.</p>
+        )}
       </div>
 
       {cocosAnormais.length > 0 && (

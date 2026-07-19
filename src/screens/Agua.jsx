@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Droplet, Check, Trash2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { formatarHora, inicioDoDia, fimDoDia } from '../lib/frequencia';
+import { formatarHora, inicioDoDia, fimDoDia, chaveDia, diasAtras, formatarDataCurta } from '../lib/frequencia';
+import { faixaAguaIdeal, statusFaixa } from '../lib/referencias';
 import DateNav from '../components/DateNav';
+import TendenciaChart from '../components/TendenciaChart';
+import ComparativoIdeal from '../components/ComparativoIdeal';
 
 function ehHoje(data) {
   return data.toDateString() === new Date().toDateString();
@@ -17,6 +20,36 @@ export default function Agua({ onToast }) {
   const [sobraInputs, setSobraInputs] = useState({});
   const [editandoId, setEditandoId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [tendencia, setTendencia] = useState([]);
+  const [pesoAtual, setPesoAtual] = useState(null);
+
+  async function carregarTendenciaEPeso() {
+    const [historico, peso] = await Promise.all([
+      supabase.from('agua').select('*')
+        .gte('registrado_em', diasAtras(13).toISOString())
+        .not('quantidade_restante', 'is', null)
+        .order('registrado_em', { ascending: true }),
+      supabase.from('peso').select('*').order('registrado_em', { ascending: false }).limit(1),
+    ]);
+
+    if (peso.data?.[0]) setPesoAtual(peso.data[0].peso_kg);
+
+    if (historico.data) {
+      const porDia = {};
+      historico.data.forEach(r => {
+        const chave = chaveDia(r.registrado_em);
+        const consumido = Number(r.quantidade_colocada) - Number(r.quantidade_restante);
+        porDia[chave] = (porDia[chave] || 0) + consumido;
+      });
+      const dias = [];
+      for (let i = 13; i >= 0; i--) {
+        const d = diasAtras(i);
+        const chave = chaveDia(d);
+        dias.push({ data: formatarDataCurta(d), valor: Math.round(porDia[chave] || 0) });
+      }
+      setTendencia(dias);
+    }
+  }
 
   async function carregar() {
     setCarregando(true);
@@ -32,6 +65,7 @@ export default function Agua({ onToast }) {
   }
 
   useEffect(() => { carregar(); }, [dataSelecionada]);
+  useEffect(() => { carregarTendenciaEPeso(); }, []);
 
   function limparForm() {
     setColocada('');
@@ -140,6 +174,29 @@ export default function Agua({ onToast }) {
           <div className="stat-value mono">{totalColocado}ml</div>
           <div className="stat-label">Colocado</div>
         </div>
+      </div>
+
+      <div className="card">
+        <p className="card-title">Comparado ao ideal</p>
+        {pesoAtual ? (
+          <ComparativoIdeal
+            titulo="Água bebida"
+            valorReal={totalConsumido}
+            unidade="ml"
+            faixa={faixaAguaIdeal(pesoAtual)}
+            status={statusFaixa(totalConsumido, faixaAguaIdeal(pesoAtual))}
+          />
+        ) : (
+          <p className="empty-state">Registre o peso da Fedora na aba Peso pra ver a comparação com o ideal.</p>
+        )}
+        <p style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 4 }}>
+          Estimativa geral baseada em referências veterinárias (~45–60ml/kg/dia). Gatos que comem ração úmida costumam beber menos água, pois já se hidratam pela comida. Não substitui orientação veterinária individual.
+        </p>
+      </div>
+
+      <div className="card">
+        <p className="card-title">Tendência (14 dias)</p>
+        <TendenciaChart dados={tendencia} cor="#64B5F6" />
       </div>
 
       {visualizandoHoje ? (

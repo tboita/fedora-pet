@@ -71,6 +71,21 @@ export function inicioDoDia(data = new Date()) {
   return d;
 }
 
+export function chaveDia(data) {
+  const d = new Date(data);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function diasAtras(n, base = new Date()) {
+  const d = inicioDoDia(base);
+  d.setDate(d.getDate() - n);
+  return d;
+}
+
+export function formatarDataCurta(data) {
+  return new Date(data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
 export function fimDoDia(data = new Date()) {
   const d = new Date(data);
   d.setHours(23, 59, 59, 999);

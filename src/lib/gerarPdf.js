@@ -1,21 +1,42 @@
 import { jsPDF } from 'jspdf';
 import { formatarData, formatarHora, rotuloFrequencia } from './frequencia';
 
+const MARGEM_ESQUERDA = 14;
+const LARGURA_MAX = 182; // largura útil da página A4 (210mm - margens)
+const LIMITE_INFERIOR = 280; // ponto seguro antes do fim da página A4 (297mm)
+
 export function gerarRelatorioPDF(dados) {
   const doc = new jsPDF();
   const dataRelatorio = dados.dataRelatorio || new Date();
   const dataFormatada = formatarData(dataRelatorio);
   let y = 20;
 
+  function quebrarPaginaSeNecessario(alturaNecessaria) {
+    if (y + alturaNecessaria > LIMITE_INFERIOR) {
+      doc.addPage();
+      y = 20;
+    }
+  }
+
   function linha(texto, tamanho = 11, negrito = false, cor = [30, 34, 51]) {
     doc.setFontSize(tamanho);
     doc.setFont('helvetica', negrito ? 'bold' : 'normal');
     doc.setTextColor(...cor);
-    doc.text(texto, 14, y);
-    y += tamanho === 11 ? 7 : 9;
+
+    const alturaLinha = tamanho === 11 ? 7 : 9;
+    const linhasQuebradas = doc.splitTextToSize(texto, LARGURA_MAX);
+
+    linhasQuebradas.forEach(parte => {
+      quebrarPaginaSeNecessario(alturaLinha);
+      doc.text(parte, MARGEM_ESQUERDA, y);
+      y += alturaLinha;
+    });
   }
 
-  function espaco(n = 4) { y += n; }
+  function espaco(n = 4) {
+    quebrarPaginaSeNecessario(n);
+    y += n;
+  }
 
   linha('Relatório diário - Fedora', 18, true);
   linha(dataFormatada, 11, false, [140, 145, 168]);
@@ -23,7 +44,7 @@ export function gerarRelatorioPDF(dados) {
 
   linha('Alimentação', 13, true);
   linha(`Ração seca comida: ${dados.totalSecaConsumida}g   ·   Ração úmida comida: ${dados.totalUmidaConsumida}g`);
-  if (dados.alimentacao.length === 0) linha('Nenhum registro hoje.');
+  if (dados.alimentacao.length === 0) linha('Nenhum registro nesse dia.');
   dados.alimentacao.forEach(r => {
     const tipoLabel = r.tipo === 'umida' ? 'úmida' : 'seca';
     const status = r.quantidade_restante != null
@@ -36,7 +57,7 @@ export function gerarRelatorioPDF(dados) {
 
   linha('Água', 13, true);
   linha(`Total colocado: ${dados.totalAgua}ml   ·   Total bebido: ${dados.totalAguaConsumida}ml`);
-  if (dados.agua.length === 0) linha('Nenhum registro hoje.');
+  if (dados.agua.length === 0) linha('Nenhum registro nesse dia.');
   dados.agua.forEach(r => {
     const status = r.quantidade_restante != null
       ? `bebeu ${(r.quantidade_colocada - r.quantidade_restante).toFixed(0)}ml`
@@ -67,7 +88,7 @@ export function gerarRelatorioPDF(dados) {
   espaco(4);
 
   linha('Comportamento', 13, true);
-  if (dados.comportamento.length === 0) linha('Nenhuma nota hoje.');
+  if (dados.comportamento.length === 0) linha('Nenhuma nota nesse dia.');
   dados.comportamento.forEach(c => {
     linha(`${formatarHora(c.registrado_em)} - ${c.observacoes}`, 10);
   });
