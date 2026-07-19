@@ -6,6 +6,7 @@ create table if not exists alimentacao (
   registrado_em timestamptz not null default now(),
   quantidade_colocada numeric,
   quantidade_restante numeric,
+  tipo text not null default 'seca' check (tipo in ('seca', 'umida')),
   observacoes text
 );
 

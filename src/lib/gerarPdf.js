@@ -21,13 +21,15 @@ export function gerarRelatorioPDF(dados) {
   espaco(4);
 
   linha('Alimentação', 13, true);
-  linha(`Total colocado: ${dados.totalComida}g   ·   Total comido: ${dados.totalComidaConsumida}g`);
+  linha(`Ração seca comida: ${dados.totalSecaConsumida}g   ·   Ração úmida comida: ${dados.totalUmidaConsumida}g`);
   if (dados.alimentacao.length === 0) linha('Nenhum registro hoje.');
   dados.alimentacao.forEach(r => {
+    const tipoLabel = r.tipo === 'umida' ? 'úmida' : 'seca';
     const status = r.quantidade_restante != null
       ? `comeu ${(r.quantidade_colocada - r.quantidade_restante).toFixed(0)}g`
       : 'aguardando sobra';
-    linha(`${formatarHora(r.registrado_em)} - ${r.quantidade_colocada}g colocados (${status})`, 10);
+    const obs = r.observacoes ? ` [${r.observacoes}]` : '';
+    linha(`${formatarHora(r.registrado_em)} - ${r.quantidade_colocada}g (${tipoLabel}) colocados (${status})${obs}`, 10);
   });
   espaco(4);
 
@@ -38,7 +40,8 @@ export function gerarRelatorioPDF(dados) {
     const status = r.quantidade_restante != null
       ? `bebeu ${(r.quantidade_colocada - r.quantidade_restante).toFixed(0)}ml`
       : 'aguardando sobra';
-    linha(`${formatarHora(r.registrado_em)} - ${r.quantidade_colocada}ml colocados (${status})`, 10);
+    const obs = r.observacoes ? ` [${r.observacoes}]` : '';
+    linha(`${formatarHora(r.registrado_em)} - ${r.quantidade_colocada}ml colocados (${status})${obs}`, 10);
   });
   espaco(4);
 

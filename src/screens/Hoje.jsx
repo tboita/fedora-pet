@@ -43,8 +43,11 @@ export default function Hoje() {
   const fechadosComida = dados.alimentacao.filter(r => r.quantidade_restante != null);
   const fechadosAgua = dados.agua.filter(r => r.quantidade_restante != null);
 
-  const totalComida = dados.alimentacao.reduce((s, r) => s + Number(r.quantidade_colocada || 0), 0);
-  const totalComidaConsumida = fechadosComida.reduce((s, r) => s + (Number(r.quantidade_colocada) - Number(r.quantidade_restante)), 0);
+  const secaFechada = fechadosComida.filter(r => (r.tipo || 'seca') === 'seca');
+  const umidaFechada = fechadosComida.filter(r => r.tipo === 'umida');
+  const totalSecaConsumida = secaFechada.reduce((s, r) => s + (Number(r.quantidade_colocada) - Number(r.quantidade_restante)), 0);
+  const totalUmidaConsumida = umidaFechada.reduce((s, r) => s + (Number(r.quantidade_colocada) - Number(r.quantidade_restante)), 0);
+  const totalComidaConsumida = totalSecaConsumida + totalUmidaConsumida;
   const totalAgua = dados.agua.reduce((s, r) => s + Number(r.quantidade_colocada || 0), 0);
   const totalAguaConsumida = fechadosAgua.reduce((s, r) => s + (Number(r.quantidade_colocada) - Number(r.quantidade_restante)), 0);
 
@@ -58,7 +61,7 @@ export default function Hoje() {
   });
 
   function baixarPdf() {
-    gerarRelatorioPDF({ ...dados, totalComida, totalComidaConsumida, totalAgua, totalAguaConsumida });
+    gerarRelatorioPDF({ ...dados, totalSecaConsumida, totalUmidaConsumida, totalComidaConsumida, totalAgua, totalAguaConsumida });
   }
 
   return (
@@ -69,7 +72,7 @@ export default function Hoje() {
             <Fish size={16} color="var(--comida)" />
           </div>
           <div className="stat-value mono">{totalComidaConsumida}g</div>
-          <div className="stat-label">Comeu hoje</div>
+          <div className="stat-label">Comeu hoje (seca {totalSecaConsumida}g · úmida {totalUmidaConsumida}g)</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--agua-soft)' }}>

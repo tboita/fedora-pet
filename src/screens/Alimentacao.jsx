@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { formatarHora, inicioDoDia, fimDoDia } from '../lib/frequencia';
 
 export default function Alimentacao({ onToast }) {
+  const [tipo, setTipo] = useState('seca');
   const [colocada, setColocada] = useState('');
   const [obs, setObs] = useState('');
   const [registros, setRegistros] = useState([]);
@@ -27,6 +28,7 @@ export default function Alimentacao({ onToast }) {
   function limparForm() {
     setColocada('');
     setObs('');
+    setTipo('seca');
   }
 
   async function salvar(e) {
@@ -36,6 +38,7 @@ export default function Alimentacao({ onToast }) {
       quantidade_colocada: Number(colocada),
       quantidade_restante: null,
       observacoes: obs || null,
+      tipo,
     });
     if (!error) {
       limparForm();
@@ -68,8 +71,11 @@ export default function Alimentacao({ onToast }) {
 
   const abertos = registros.filter(r => r.quantidade_restante == null);
   const fechados = registros.filter(r => r.quantidade_restante != null);
-  const totalColocado = registros.reduce((s, r) => s + Number(r.quantidade_colocada || 0), 0);
-  const totalConsumido = fechados.reduce((s, r) => s + (Number(r.quantidade_colocada) - Number(r.quantidade_restante)), 0);
+
+  const seca = fechados.filter(r => (r.tipo || 'seca') === 'seca');
+  const umida = fechados.filter(r => r.tipo === 'umida');
+  const totalSecaConsumido = seca.reduce((s, r) => s + (Number(r.quantidade_colocada) - Number(r.quantidade_restante)), 0);
+  const totalUmidaConsumido = umida.reduce((s, r) => s + (Number(r.quantidade_colocada) - Number(r.quantidade_restante)), 0);
 
   return (
     <div className="screen">
@@ -78,21 +84,27 @@ export default function Alimentacao({ onToast }) {
           <div className="stat-icon" style={{ background: 'var(--comida-soft)' }}>
             <Fish size={16} color="var(--comida)" />
           </div>
-          <div className="stat-value mono">{totalConsumido}g</div>
-          <div className="stat-label">Comido hoje</div>
+          <div className="stat-value mono">{totalSecaConsumido}g</div>
+          <div className="stat-label">Ração seca comida</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--comida-soft)' }}>
             <Fish size={16} color="var(--comida)" />
           </div>
-          <div className="stat-value mono">{totalColocado}g</div>
-          <div className="stat-label">Colocado hoje</div>
+          <div className="stat-value mono">{totalUmidaConsumido}g</div>
+          <div className="stat-label">Ração úmida comida</div>
         </div>
       </div>
 
       <div className="card">
         <p className="card-title">Nova porção</p>
         <form onSubmit={salvar}>
+          <div className="btn-row" style={{ marginBottom: 12 }}>
+            <button type="button" className={`btn-toggle ${tipo === 'seca' ? 'active' : ''}`}
+              onClick={() => setTipo('seca')}>Ração seca</button>
+            <button type="button" className={`btn-toggle ${tipo === 'umida' ? 'active' : ''}`}
+              onClick={() => setTipo('umida')}>Ração úmida</button>
+          </div>
           <div className="field" style={{ marginBottom: 12 }}>
             <label>Quantidade colocada (g)</label>
             <input type="number" inputMode="decimal" value={colocada}
@@ -100,7 +112,7 @@ export default function Alimentacao({ onToast }) {
           </div>
           <div className="field" style={{ marginBottom: 12 }}>
             <label>Observações</label>
-            <textarea value={obs} onChange={e => setObs(e.target.value)} placeholder="opcional" />
+            <textarea value={obs} onChange={e => setObs(e.target.value)} placeholder="ex: pote da esquerda" />
           </div>
           <div className="btn-row">
             <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
@@ -116,10 +128,20 @@ export default function Alimentacao({ onToast }) {
             <span className="card-title-meta">{abertos.length} em aberto</span>
           </p>
           {abertos.map(r => (
-            <div key={r.id} className="pending-row">
+            <div key={r.id} className="pending-row" style={{ alignItems: 'flex-start' }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 13 }}>{r.quantidade_colocada}g colocados</div>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>
+                  {r.quantidade_colocada}g colocados
+                  <span style={{ fontWeight: 500, color: 'var(--ink-soft)' }}>
+                    {' '}· {r.tipo === 'umida' ? 'úmida' : 'seca'}
+                  </span>
+                </div>
                 <div className="entry-time">{formatarHora(r.registrado_em)}</div>
+                {r.observacoes && (
+                  <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4, maxWidth: 160 }}>
+                    {r.observacoes}
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <input type="number" inputMode="decimal" placeholder="sobrou"
@@ -150,7 +172,7 @@ export default function Alimentacao({ onToast }) {
               <div key={r.id} className="entry-row" style={{ alignItems: 'flex-start' }}>
                 <span className="entry-time">{formatarHora(r.registrado_em)}</span>
                 <span className="mono" style={{ flex: 1, marginLeft: 10 }}>
-                  {r.quantidade_colocada}g colocados
+                  {r.quantidade_colocada}g ({r.tipo === 'umida' ? 'úmida' : 'seca'})
                   {r.quantidade_restante != null
                     ? ` · comeu ${(r.quantidade_colocada - r.quantidade_restante).toFixed(0)}g`
                     : ' · aguardando sobra'}

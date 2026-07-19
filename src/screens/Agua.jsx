@@ -116,10 +116,15 @@ export default function Agua({ onToast }) {
             <span className="card-title-meta">{abertos.length} em aberto</span>
           </p>
           {abertos.map(r => (
-            <div key={r.id} className="pending-row">
+            <div key={r.id} className="pending-row" style={{ alignItems: 'flex-start' }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 13 }}>{r.quantidade_colocada}ml colocados</div>
                 <div className="entry-time">{formatarHora(r.registrado_em)}</div>
+                {r.observacoes && (
+                  <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4, maxWidth: 160 }}>
+                    {r.observacoes}
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <input type="number" inputMode="decimal" placeholder="sobrou"

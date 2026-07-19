@@ -12,8 +12,8 @@ export default defineConfig({
         name: 'Fedora - Caderneta de Cuidados',
         short_name: 'Fedora',
         description: 'App de monitoramento de alimentação, água, saúde e medicação da Fedora',
-        theme_color: '#2F4A3B',
-        background_color: '#F1EDE2',
+        theme_color: '#14162C',
+        background_color: '#14162C',
         display: 'standalone',
         start_url: '/',
         icons: [
