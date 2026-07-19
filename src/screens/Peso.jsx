@@ -29,6 +29,9 @@ export default function Peso({ onToast }) {
       setPesoKg('');
       onToast?.('Peso registrado');
       carregar();
+    } else {
+      onToast?.(`Erro ao salvar: ${error.message}`);
+      console.error(error);
     }
   }
 
@@ -42,6 +45,9 @@ export default function Peso({ onToast }) {
     if (!error) {
       onToast?.('Registro excluído');
       carregar();
+    } else {
+      onToast?.(`Erro ao excluir: ${error.message}`);
+      console.error(error);
     }
   }
 

@@ -48,22 +48,40 @@ export default function Medicacao({ onToast }) {
       limparForm();
       onToast?.('Medicamento cadastrado');
       carregar();
+    } else {
+      onToast?.(`Erro ao salvar: ${error.message}`);
+      console.error(error);
     }
   }
 
   async function marcarComoDado(med) {
     const agora = new Date();
-    await supabase.from('medicacao_log').insert({ medicamento_id: med.id, dado_em: agora.toISOString() });
+    const { error: erroLog } = await supabase.from('medicacao_log').insert({ medicamento_id: med.id, dado_em: agora.toISOString() });
+    if (erroLog) {
+      onToast?.(`Erro ao registrar dose: ${erroLog.message}`);
+      console.error(erroLog);
+      return;
+    }
     const proxima = calcularProximaDose(med.frequencia, agora, med.horario_padrao);
-    await supabase.from('medicamentos')
+    const { error: erroUpdate } = await supabase.from('medicamentos')
       .update({ proxima_dose: proxima ? proxima.toISOString() : null })
       .eq('id', med.id);
+    if (erroUpdate) {
+      onToast?.(`Erro ao atualizar próxima dose: ${erroUpdate.message}`);
+      console.error(erroUpdate);
+      return;
+    }
     onToast?.(`${med.nome}: dose registrada`);
     carregar();
   }
 
   async function desativar(id) {
-    await supabase.from('medicamentos').update({ ativo: false }).eq('id', id);
+    const { error } = await supabase.from('medicamentos').update({ ativo: false }).eq('id', id);
+    if (error) {
+      onToast?.(`Erro ao remover: ${error.message}`);
+      console.error(error);
+      return;
+    }
     onToast?.('Medicamento removido da lista ativa');
     carregar();
   }

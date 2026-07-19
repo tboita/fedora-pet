@@ -29,6 +29,9 @@ export default function Comportamento({ onToast }) {
       setNota('');
       onToast?.('Nota registrada');
       carregar();
+    } else {
+      onToast?.(`Erro ao salvar: ${error.message}`);
+      console.error(error);
     }
   }
 
@@ -42,6 +45,9 @@ export default function Comportamento({ onToast }) {
     if (!error) {
       onToast?.('Nota excluída');
       carregar();
+    } else {
+      onToast?.(`Erro ao excluir: ${error.message}`);
+      console.error(error);
     }
   }
 

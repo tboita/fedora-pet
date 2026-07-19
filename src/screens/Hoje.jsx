@@ -3,23 +3,25 @@ import { Download, Fish, Droplet, PawPrint, Scale, NotebookPen } from 'lucide-re
 import { supabase } from '../lib/supabaseClient';
 import { inicioDoDia, fimDoDia, formatarHora, formatarData, statusDose } from '../lib/frequencia';
 import StampBadge from '../components/StampBadge';
+import DateNav from '../components/DateNav';
 import { gerarRelatorioPDF } from '../lib/gerarPdf';
 
 export default function Hoje() {
+  const [dataSelecionada, setDataSelecionada] = useState(new Date());
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
 
   async function carregar() {
     setCarregando(true);
-    const inicio = inicioDoDia().toISOString();
-    const fim = fimDoDia().toISOString();
+    const inicio = inicioDoDia(dataSelecionada).toISOString();
+    const fim = fimDoDia(dataSelecionada).toISOString();
 
     const [alimentacao, agua, necessidades, medicamentos, peso, comportamento] = await Promise.all([
       supabase.from('alimentacao').select('*').gte('registrado_em', inicio).lte('registrado_em', fim).order('registrado_em'),
       supabase.from('agua').select('*').gte('registrado_em', inicio).lte('registrado_em', fim).order('registrado_em'),
       supabase.from('necessidades').select('*').gte('registrado_em', inicio).lte('registrado_em', fim).order('registrado_em'),
       supabase.from('medicamentos').select('*').eq('ativo', true).order('proxima_dose', { ascending: true, nullsFirst: true }),
-      supabase.from('peso').select('*').order('registrado_em', { ascending: false }).limit(1),
+      supabase.from('peso').select('*').lte('registrado_em', fim).order('registrado_em', { ascending: false }).limit(1),
       supabase.from('comportamento').select('*').gte('registrado_em', inicio).lte('registrado_em', fim).order('registrado_em'),
     ]);
 
@@ -34,10 +36,15 @@ export default function Hoje() {
     setCarregando(false);
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); }, [dataSelecionada]);
 
   if (carregando || !dados) {
-    return <div className="screen"><p className="empty-state">Carregando relatório do dia…</p></div>;
+    return (
+      <div className="screen">
+        <DateNav data={dataSelecionada} onChange={setDataSelecionada} />
+        <p className="empty-state">Carregando relatório do dia…</p>
+      </div>
+    );
   }
 
   const fechadosComida = dados.alimentacao.filter(r => r.quantidade_restante != null);
@@ -61,25 +68,27 @@ export default function Hoje() {
   });
 
   function baixarPdf() {
-    gerarRelatorioPDF({ ...dados, totalSecaConsumida, totalUmidaConsumida, totalComidaConsumida, totalAgua, totalAguaConsumida });
+    gerarRelatorioPDF({ ...dados, totalSecaConsumida, totalUmidaConsumida, totalComidaConsumida, totalAgua, totalAguaConsumida, dataRelatorio: dataSelecionada });
   }
 
   return (
     <div className="screen">
+      <DateNav data={dataSelecionada} onChange={setDataSelecionada} />
+
       <div className="stat-row">
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--comida-soft)' }}>
             <Fish size={16} color="var(--comida)" />
           </div>
           <div className="stat-value mono">{totalComidaConsumida}g</div>
-          <div className="stat-label">Comeu hoje (seca {totalSecaConsumida}g · úmida {totalUmidaConsumida}g)</div>
+          <div className="stat-label">Comeu (seca {totalSecaConsumida}g · úmida {totalUmidaConsumida}g)</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--agua-soft)' }}>
             <Droplet size={16} color="var(--agua)" />
           </div>
           <div className="stat-value mono">{totalAguaConsumida}ml</div>
-          <div className="stat-label">Bebeu hoje</div>
+          <div className="stat-label">Bebeu</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--necessidades-soft)' }}>
@@ -93,24 +102,24 @@ export default function Hoje() {
             <Scale size={16} color="var(--peso)" />
           </div>
           <div className="stat-value mono">{dados.peso ? `${dados.peso.peso_kg}kg` : '—'}</div>
-          <div className="stat-label">Peso recente</div>
+          <div className="stat-label">Peso mais recente</div>
         </div>
       </div>
 
       <div className="card">
         <p className="card-title">
-          Relatório de hoje
-          <span className="card-title-meta">{formatarData(new Date())}</span>
+          Relatório
+          <span className="card-title-meta">{formatarData(dataSelecionada)}</span>
         </p>
         <button className="btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           onClick={baixarPdf}>
-          <Download size={16} /> Baixar PDF do dia
+          <Download size={16} /> Baixar PDF deste dia
         </button>
       </div>
 
       {cocosAnormais.length > 0 && (
         <div className="card" style={{ borderColor: 'var(--remedios-soft)', background: 'var(--remedios-soft)' }}>
-          <p className="card-title" style={{ color: '#D6284A' }}>⚠ Cocô fora do normal hoje</p>
+          <p className="card-title" style={{ color: 'var(--danger)' }}>⚠ Cocô fora do normal nesse dia</p>
           <div className="entry-list">
             {cocosAnormais.map(c => (
               <div key={c.id} className="entry-row">
@@ -154,7 +163,7 @@ export default function Hoje() {
 
       {dados.comportamento.length > 0 && (
         <div className="card">
-          <p className="card-title"><NotebookPen size={15} style={{ marginRight: 6 }} />Notas de hoje</p>
+          <p className="card-title"><NotebookPen size={15} style={{ marginRight: 6 }} />Notas desse dia</p>
           <div className="entry-list">
             {dados.comportamento.map(c => (
               <div key={c.id} className="entry-row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 4 }}>

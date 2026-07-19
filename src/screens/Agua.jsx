@@ -1,28 +1,37 @@
 import { useEffect, useState } from 'react';
-import { Droplet, Check, Trash2 } from 'lucide-react';
+import { Droplet, Check, Trash2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { formatarHora, inicioDoDia, fimDoDia } from '../lib/frequencia';
+import DateNav from '../components/DateNav';
+
+function ehHoje(data) {
+  return data.toDateString() === new Date().toDateString();
+}
 
 export default function Agua({ onToast }) {
+  const [dataSelecionada, setDataSelecionada] = useState(new Date());
   const [colocada, setColocada] = useState('');
   const [obs, setObs] = useState('');
   const [registros, setRegistros] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [sobraInputs, setSobraInputs] = useState({});
+  const [editandoId, setEditandoId] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   async function carregar() {
     setCarregando(true);
     const { data, error } = await supabase
       .from('agua')
       .select('*')
-      .gte('registrado_em', inicioDoDia().toISOString())
-      .lte('registrado_em', fimDoDia().toISOString())
+      .gte('registrado_em', inicioDoDia(dataSelecionada).toISOString())
+      .lte('registrado_em', fimDoDia(dataSelecionada).toISOString())
       .order('registrado_em', { ascending: false });
     if (!error) setRegistros(data || []);
+    else { onToast?.(`Erro ao carregar: ${error.message}`); console.error(error); }
     setCarregando(false);
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); }, [dataSelecionada]);
 
   function limparForm() {
     setColocada('');
@@ -41,6 +50,9 @@ export default function Agua({ onToast }) {
       limparForm();
       onToast?.('Água registrada');
       carregar();
+    } else {
+      onToast?.(`Erro ao salvar: ${error.message}`);
+      console.error(error);
     }
   }
 
@@ -54,6 +66,9 @@ export default function Agua({ onToast }) {
       setSobraInputs(prev => ({ ...prev, [id]: undefined }));
       onToast?.('Sobra registrada');
       carregar();
+    } else {
+      onToast?.(`Erro ao salvar sobra: ${error.message}`);
+      console.error(error);
     }
   }
 
@@ -63,6 +78,39 @@ export default function Agua({ onToast }) {
     if (!error) {
       onToast?.('Registro excluído');
       carregar();
+    } else {
+      onToast?.(`Erro ao excluir: ${error.message}`);
+      console.error(error);
+    }
+  }
+
+  function iniciarEdicao(r) {
+    setEditandoId(r.id);
+    setEditForm({
+      quantidade_colocada: r.quantidade_colocada,
+      quantidade_restante: r.quantidade_restante ?? '',
+      observacoes: r.observacoes || '',
+    });
+  }
+
+  function cancelarEdicao() {
+    setEditandoId(null);
+    setEditForm({});
+  }
+
+  async function salvarEdicao(id) {
+    const { error } = await supabase.from('agua').update({
+      quantidade_colocada: Number(editForm.quantidade_colocada),
+      quantidade_restante: editForm.quantidade_restante === '' ? null : Number(editForm.quantidade_restante),
+      observacoes: editForm.observacoes || null,
+    }).eq('id', id);
+    if (!error) {
+      onToast?.('Registro atualizado');
+      cancelarEdicao();
+      carregar();
+    } else {
+      onToast?.(`Erro ao atualizar: ${error.message}`);
+      console.error(error);
     }
   }
 
@@ -71,43 +119,55 @@ export default function Agua({ onToast }) {
   const totalColocado = registros.reduce((s, r) => s + Number(r.quantidade_colocada || 0), 0);
   const totalConsumido = fechados.reduce((s, r) => s + (Number(r.quantidade_colocada) - Number(r.quantidade_restante)), 0);
 
+  const visualizandoHoje = ehHoje(dataSelecionada);
+
   return (
     <div className="screen">
+      <DateNav data={dataSelecionada} onChange={setDataSelecionada} />
+
       <div className="stat-row">
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--agua-soft)' }}>
             <Droplet size={16} color="var(--agua)" />
           </div>
           <div className="stat-value mono">{totalConsumido}ml</div>
-          <div className="stat-label">Bebido hoje</div>
+          <div className="stat-label">Bebido</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--agua-soft)' }}>
             <Droplet size={16} color="var(--agua)" />
           </div>
           <div className="stat-value mono">{totalColocado}ml</div>
-          <div className="stat-label">Colocado hoje</div>
+          <div className="stat-label">Colocado</div>
         </div>
       </div>
 
-      <div className="card">
-        <p className="card-title">Nova porção</p>
-        <form onSubmit={salvar}>
-          <div className="field" style={{ marginBottom: 12 }}>
-            <label>Quantidade colocada (ml)</label>
-            <input type="number" inputMode="decimal" value={colocada}
-              onChange={e => setColocada(e.target.value)} placeholder="ex: 200" required />
-          </div>
-          <div className="field" style={{ marginBottom: 12 }}>
-            <label>Observações</label>
-            <textarea value={obs} onChange={e => setObs(e.target.value)} placeholder="opcional" />
-          </div>
-          <div className="btn-row">
-            <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
-            <button type="submit" className="btn-primary">Registrar</button>
-          </div>
-        </form>
-      </div>
+      {visualizandoHoje ? (
+        <div className="card">
+          <p className="card-title">Nova porção</p>
+          <form onSubmit={salvar}>
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>Quantidade colocada (ml)</label>
+              <input type="number" inputMode="decimal" value={colocada}
+                onChange={e => setColocada(e.target.value)} placeholder="ex: 200" required />
+            </div>
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>Observações</label>
+              <textarea value={obs} onChange={e => setObs(e.target.value)} placeholder="opcional" />
+            </div>
+            <div className="btn-row">
+              <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
+              <button type="submit" className="btn-primary">Registrar</button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div className="card">
+          <p className="empty-state" style={{ padding: 0 }}>
+            Visualizando um dia passado. Você pode editar ou excluir registros abaixo, mas novos registros só podem ser feitos em "Hoje".
+          </p>
+        </div>
+      )}
 
       {abertos.length > 0 && (
         <div className="card">
@@ -144,31 +204,57 @@ export default function Agua({ onToast }) {
       )}
 
       <div className="card">
-        <p className="card-title">Histórico de hoje</p>
+        <p className="card-title">Histórico do dia</p>
         {carregando ? (
           <p className="empty-state">Carregando…</p>
         ) : registros.length === 0 ? (
-          <p className="empty-state">Nenhuma porção registrada ainda hoje.</p>
+          <p className="empty-state">Nenhuma porção registrada nesse dia.</p>
         ) : (
           <div className="entry-list">
             {registros.map(r => (
-              <div key={r.id} className="entry-row" style={{ alignItems: 'flex-start' }}>
-                <span className="entry-time">{formatarHora(r.registrado_em)}</span>
-                <span className="mono" style={{ flex: 1, marginLeft: 10 }}>
-                  {r.quantidade_colocada}ml colocados
-                  {r.quantidade_restante != null
-                    ? ` · bebeu ${(r.quantidade_colocada - r.quantidade_restante).toFixed(0)}ml`
-                    : ' · aguardando sobra'}
-                  {r.observacoes && (
-                    <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
-                      {r.observacoes}
-                    </span>
-                  )}
-                </span>
-                <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
-                  <Trash2 size={14} />
-                </button>
-              </div>
+              editandoId === r.id ? (
+                <div key={r.id} className="pending-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+                  <div className="field-row" style={{ marginBottom: 0 }}>
+                    <div className="field">
+                      <label>Colocado (ml)</label>
+                      <input type="number" value={editForm.quantidade_colocada}
+                        onChange={e => setEditForm(f => ({ ...f, quantidade_colocada: e.target.value }))} />
+                    </div>
+                    <div className="field">
+                      <label>Restante (ml)</label>
+                      <input type="number" value={editForm.quantidade_restante}
+                        onChange={e => setEditForm(f => ({ ...f, quantidade_restante: e.target.value }))} placeholder="sem sobra" />
+                    </div>
+                  </div>
+                  <textarea value={editForm.observacoes}
+                    onChange={e => setEditForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="observações" />
+                  <div className="btn-row">
+                    <button type="button" className="btn-cancel" onClick={cancelarEdicao}>Cancelar</button>
+                    <button type="button" className="btn-primary" onClick={() => salvarEdicao(r.id)}>Salvar</button>
+                  </div>
+                </div>
+              ) : (
+                <div key={r.id} className="entry-row" style={{ alignItems: 'flex-start' }}>
+                  <span className="entry-time">{formatarHora(r.registrado_em)}</span>
+                  <span className="mono" style={{ flex: 1, marginLeft: 10 }}>
+                    {r.quantidade_colocada}ml colocados
+                    {r.quantidade_restante != null
+                      ? ` · bebeu ${(r.quantidade_colocada - r.quantidade_restante).toFixed(0)}ml`
+                      : ' · aguardando sobra'}
+                    {r.observacoes && (
+                      <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
+                        {r.observacoes}
+                      </span>
+                    )}
+                  </span>
+                  <button className="btn-icon-danger" onClick={() => iniciarEdicao(r)} title="Editar">
+                    <Pencil size={14} />
+                  </button>
+                  <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              )
             ))}
           </div>
         )}

@@ -3,7 +3,8 @@ import { formatarData, formatarHora, rotuloFrequencia } from './frequencia';
 
 export function gerarRelatorioPDF(dados) {
   const doc = new jsPDF();
-  const hoje = formatarData(new Date());
+  const dataRelatorio = dados.dataRelatorio || new Date();
+  const dataFormatada = formatarData(dataRelatorio);
   let y = 20;
 
   function linha(texto, tamanho = 11, negrito = false, cor = [30, 34, 51]) {
@@ -17,7 +18,7 @@ export function gerarRelatorioPDF(dados) {
   function espaco(n = 4) { y += n; }
 
   linha('Relatório diário - Fedora', 18, true);
-  linha(hoje, 11, false, [140, 145, 168]);
+  linha(dataFormatada, 11, false, [140, 145, 168]);
   espaco(4);
 
   linha('Alimentação', 13, true);
@@ -71,5 +72,5 @@ export function gerarRelatorioPDF(dados) {
     linha(`${formatarHora(c.registrado_em)} - ${c.observacoes}`, 10);
   });
 
-  doc.save(`fedora-relatorio-${new Date().toISOString().slice(0, 10)}.pdf`);
+  doc.save(`fedora-relatorio-${dataRelatorio.toISOString().slice(0, 10)}.pdf`);
 }

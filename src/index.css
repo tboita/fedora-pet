@@ -401,6 +401,23 @@ button:active { transform: scale(0.97); }
   background: var(--remedios-soft);
 }
 
+.btn-icon-neutral {
+  background: var(--surface-alt);
+  border: none;
+  color: var(--ink);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.btn-icon-neutral:disabled {
+  color: var(--ink-soft);
+  opacity: 0.5;
+}
+
 .btn-icon-success {
   background: var(--necessidades-soft);
   border: none;
