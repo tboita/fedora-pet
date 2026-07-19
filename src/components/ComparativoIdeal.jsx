@@ -13,7 +13,8 @@ function textoStatus(status) {
 }
 
 export default function ComparativoIdeal({ titulo, valorReal, unidade, faixa, status }) {
-  const percentual = faixa ? Math.min(100, Math.round((valorReal / faixa.max) * 100)) : 0;
+  const maxVisual = faixa ? (faixa.semTeto ? faixa.min * 1.6 : faixa.max) : 0;
+  const percentual = faixa ? Math.min(100, Math.round((valorReal / maxVisual) * 100)) : 0;
 
   return (
     <div style={{ marginBottom: 14 }}>
@@ -25,7 +26,9 @@ export default function ComparativoIdeal({ titulo, valorReal, unidade, faixa, st
         <div className="progress-fill" style={{ width: `${percentual}%`, background: corStatus(status) }} />
       </div>
       <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4 }}>
-        {valorReal}{unidade} de {faixa ? `${faixa.min}–${faixa.max}${unidade} ideal` : 'faixa indisponível'}
+        {valorReal}{unidade} de {faixa
+          ? (faixa.semTeto ? `mín. ${faixa.min}${unidade} ideal` : `${faixa.min}–${faixa.max}${unidade} ideal`)
+          : 'faixa indisponível'}
       </div>
     </div>
   );

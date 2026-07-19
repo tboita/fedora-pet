@@ -6,6 +6,7 @@ import { faixaRacaoSecaIdeal, statusFaixa } from '../lib/referencias';
 import DateNav from '../components/DateNav';
 import TendenciaChart from '../components/TendenciaChart';
 import ComparativoIdeal from '../components/ComparativoIdeal';
+import AlertaJejum from '../components/AlertaJejum';
 
 function ehHoje(data) {
   return data.toDateString() === new Date().toDateString();
@@ -23,6 +24,13 @@ export default function Alimentacao({ onToast }) {
   const [editForm, setEditForm] = useState({});
   const [tendencia, setTendencia] = useState([]);
   const [pesoAtual, setPesoAtual] = useState(null);
+  const [ultimaAlimentacao, setUltimaAlimentacao] = useState(null);
+
+  async function carregarUltimaAlimentacao() {
+    const { data } = await supabase.from('alimentacao').select('*')
+      .order('registrado_em', { ascending: false }).limit(1);
+    if (data?.[0]) setUltimaAlimentacao(data[0]);
+  }
 
   async function carregarTendenciaEPeso() {
     const [historico, peso] = await Promise.all([
@@ -66,7 +74,7 @@ export default function Alimentacao({ onToast }) {
   }
 
   useEffect(() => { carregar(); }, [dataSelecionada]);
-  useEffect(() => { carregarTendenciaEPeso(); }, []);
+  useEffect(() => { carregarTendenciaEPeso(); carregarUltimaAlimentacao(); }, []);
 
   function limparForm() {
     setColocada('');
@@ -87,6 +95,7 @@ export default function Alimentacao({ onToast }) {
       limparForm();
       onToast?.('Porção registrada');
       carregar();
+      carregarUltimaAlimentacao();
     } else {
       onToast?.(`Erro ao salvar: ${error.message}`);
       console.error(error);
@@ -167,6 +176,8 @@ export default function Alimentacao({ onToast }) {
     <div className="screen">
       <DateNav data={dataSelecionada} onChange={setDataSelecionada} />
 
+      {visualizandoHoje && <AlertaJejum ultimaAlimentacao={ultimaAlimentacao} />}
+
       <div className="stat-row">
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--comida-soft)' }}>
@@ -198,7 +209,7 @@ export default function Alimentacao({ onToast }) {
           <p className="empty-state">Registre o peso da Fedora na aba Peso pra ver a comparação com o ideal.</p>
         )}
         <p style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 4 }}>
-          Estimativa geral baseada em referências veterinárias (~11–16g/kg/dia). Não substitui orientação veterinária individual.
+          A equipe médica da Fedora orientou que agora não é hora de dieta — a prioridade é ela comer, independente da meta de gramas abaixo. Essa faixa (~11–16g/kg/dia) é só uma referência geral de manutenção, não uma meta a perseguir enquanto o apetite estiver instável.
         </p>
       </div>
 

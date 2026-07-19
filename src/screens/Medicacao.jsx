@@ -193,6 +193,8 @@ export default function Medicacao({ onToast }) {
                 <label>Frequência</label>
                 <select value={frequencia} onChange={e => setFrequencia(e.target.value)}>
                   <option value="diario">Diário</option>
+                  <option value="8h">A cada 8h</option>
+                  <option value="12h">A cada 12h</option>
                   <option value="48h">A cada 48h</option>
                   <option value="30dias">A cada 30 dias</option>
                 </select>
@@ -242,6 +244,8 @@ export default function Medicacao({ onToast }) {
                         <label>Frequência</label>
                         <select value={editForm.frequencia} onChange={e => setEditForm(f => ({ ...f, frequencia: e.target.value }))}>
                           <option value="diario">Diário</option>
+                          <option value="8h">A cada 8h</option>
+                          <option value="12h">A cada 12h</option>
                           <option value="48h">A cada 48h</option>
                           <option value="30dias">A cada 30 dias</option>
                         </select>

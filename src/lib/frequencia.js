@@ -12,6 +12,18 @@ export function calcularProximaDose(frequencia, dadoEm, horarioPadrao) {
     return proxima;
   }
 
+  if (frequencia === '8h') {
+    const proxima = new Date(base);
+    proxima.setHours(proxima.getHours() + 8);
+    return proxima;
+  }
+
+  if (frequencia === '12h') {
+    const proxima = new Date(base);
+    proxima.setHours(proxima.getHours() + 12);
+    return proxima;
+  }
+
   if (frequencia === '48h') {
     const proxima = new Date(base);
     proxima.setHours(proxima.getHours() + 48);
@@ -86,6 +98,11 @@ export function formatarDataCurta(data) {
   return new Date(data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
+export function horasDesde(data) {
+  if (!data) return null;
+  return (new Date() - new Date(data)) / (1000 * 60 * 60);
+}
+
 export function fimDoDia(data = new Date()) {
   const d = new Date(data);
   d.setHours(23, 59, 59, 999);
@@ -94,6 +111,8 @@ export function fimDoDia(data = new Date()) {
 
 export const rotuloFrequencia = {
   diario: 'Diário',
+  '8h': 'A cada 8h',
+  '12h': 'A cada 12h',
   '48h': 'A cada 48h',
   '30dias': 'A cada 30 dias',
 };

@@ -173,7 +173,7 @@ export default function Necessidades({ onToast }) {
           status={statusFaixa(contagem.coco || 0, faixaCocoIdeal)}
         />
         <p style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 4 }}>
-          Faixas gerais de referência veterinária (não dependem do peso). Menos de 2 xixis por dia pode indicar baixa ingestão de líquidos.
+          Faixas gerais de referência veterinária. Em gatos com DCR como a Fedora, fazer mais xixi que o normal (poliúria) costuma ser esperado pela doença, não necessariamente um problema agudo — mas mudanças bruscas valem atenção.
         </p>
       </div>
 

@@ -190,7 +190,7 @@ export default function Agua({ onToast }) {
           <p className="empty-state">Registre o peso da Fedora na aba Peso pra ver a comparação com o ideal.</p>
         )}
         <p style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 4 }}>
-          Estimativa geral baseada em referências veterinárias (~45–60ml/kg/dia). Gatos que comem ração úmida costumam beber menos água, pois já se hidratam pela comida. Não substitui orientação veterinária individual.
+          Considerando a DCR da Fedora, ~50ml/kg/dia é tratado como piso mínimo, não teto — beber mais tende a ser protetor, não um excesso (Sparkes et al., 2016, J Feline Med Surg). Não substitui orientação veterinária individual.
         </p>
       </div>
 

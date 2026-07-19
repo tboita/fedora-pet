@@ -2,16 +2,28 @@ import { useEffect, useState } from 'react';
 import { Download, Fish, Droplet, PawPrint, Scale, NotebookPen } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { inicioDoDia, fimDoDia, formatarHora, formatarData, statusDose } from '../lib/frequencia';
-import { faixaAguaIdeal, faixaRacaoSecaIdeal, faixaXixiIdeal, faixaCocoIdeal, statusFaixa } from '../lib/referencias';
+import { faixaAguaIdeal, faixaRacaoSecaIdeal, faixaXixiIdeal, faixaCocoIdeal, statusFaixa, FONTES_CIENTIFICAS, CONTEXTO_CLINICO } from '../lib/referencias';
 import StampBadge from '../components/StampBadge';
 import DateNav from '../components/DateNav';
 import ComparativoIdeal from '../components/ComparativoIdeal';
+import AlertaJejum from '../components/AlertaJejum';
 import { gerarRelatorioPDF } from '../lib/gerarPdf';
+
+function ehHoje(data) {
+  return data.toDateString() === new Date().toDateString();
+}
 
 export default function Hoje() {
   const [dataSelecionada, setDataSelecionada] = useState(new Date());
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  const [ultimaAlimentacao, setUltimaAlimentacao] = useState(null);
+
+  async function carregarUltimaAlimentacao() {
+    const { data } = await supabase.from('alimentacao').select('*')
+      .order('registrado_em', { ascending: false }).limit(1);
+    if (data?.[0]) setUltimaAlimentacao(data[0]);
+  }
 
   async function carregar() {
     setCarregando(true);
@@ -39,6 +51,7 @@ export default function Hoje() {
   }
 
   useEffect(() => { carregar(); }, [dataSelecionada]);
+  useEffect(() => { carregarUltimaAlimentacao(); }, []);
 
   if (carregando || !dados) {
     return (
@@ -76,6 +89,18 @@ export default function Hoje() {
   return (
     <div className="screen">
       <DateNav data={dataSelecionada} onChange={setDataSelecionada} />
+
+      {ehHoje(dataSelecionada) && <AlertaJejum ultimaAlimentacao={ultimaAlimentacao} />}
+
+      <div className="card" style={{ padding: 14 }}>
+        <p className="card-title" style={{ marginBottom: 8 }}>Contexto clínico</p>
+        <div style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <span><strong style={{ color: 'var(--ink)' }}>IRIS:</strong> {CONTEXTO_CLINICO.estagioIris}</span>
+          <span><strong style={{ color: 'var(--ink)' }}>Creatinina:</strong> {CONTEXTO_CLINICO.ultimaCreatinina}</span>
+          <span><strong style={{ color: 'var(--ink)' }}>Ureia:</strong> {CONTEXTO_CLINICO.ultimaUreia}</span>
+          <span><strong style={{ color: 'var(--ink)' }}>UPC:</strong> {CONTEXTO_CLINICO.upc}</span>
+        </div>
+      </div>
 
       <div className="stat-row">
         <div className="stat-card">
@@ -152,8 +177,14 @@ export default function Hoje() {
               status={statusFaixa(cocos, faixaCocoIdeal)}
             />
             <p style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 4 }}>
-              Estimativas gerais baseadas em referências veterinárias. Não substituem orientação individual — em caso de dúvida, consulte o veterinário da Fedora.
+              Estimativas consideram a DCR da Fedora — água tratada como piso mínimo (mais é protetor, não excesso). A equipe médica orientou que agora não é hora de dieta: a prioridade é ela comer, não bater a meta de gramas. Não substituem orientação veterinária individual.
             </p>
+            <details style={{ marginTop: 8 }}>
+              <summary style={{ fontSize: 11, color: 'var(--ink-soft)', cursor: 'pointer' }}>Fontes científicas (revisadas por pares)</summary>
+              <ul style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 6, paddingLeft: 16 }}>
+                {FONTES_CIENTIFICAS.map(fonte => <li key={fonte} style={{ marginBottom: 3 }}>{fonte}</li>)}
+              </ul>
+            </details>
           </>
         ) : (
           <p className="empty-state">Registre o peso da Fedora na aba Peso pra ver o comparativo com o ideal.</p>

@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { formatarData, formatarHora, rotuloFrequencia } from './frequencia';
+import { faixaAguaIdeal, faixaRacaoSecaIdeal, faixaXixiIdeal, faixaCocoIdeal, statusFaixa, FONTES_CIENTIFICAS } from './referencias';
 
 const MARGEM_ESQUERDA = 14;
 const LARGURA_MAX = 182; // largura útil da página A4 (210mm - margens)
@@ -92,6 +93,28 @@ export function gerarRelatorioPDF(dados) {
   dados.comportamento.forEach(c => {
     linha(`${formatarHora(c.registrado_em)} - ${c.observacoes}`, 10);
   });
+  espaco(4);
+
+  const xixisIdeal = dados.necessidades.filter(n => n.tipo === 'xixi').length;
+  const cocosIdeal = dados.necessidades.filter(n => n.tipo === 'coco').length;
+
+  linha('Consumo x ideal (considerando a DCR da Fedora)', 13, true);
+  if (dados.peso) {
+    const pesoKg = dados.peso.peso_kg;
+    const fAgua = faixaAguaIdeal(pesoKg);
+    const fRacao = faixaRacaoSecaIdeal(pesoKg);
+    linha(`Ração seca: ${dados.totalSecaConsumida}g (ideal ${fRacao.min}-${fRacao.max}g) - ${statusFaixa(dados.totalSecaConsumida, fRacao)}`, 10);
+    linha(`Água: ${dados.totalAguaConsumida}ml (piso ideal ${fAgua.min}ml, sem teto) - ${statusFaixa(dados.totalAguaConsumida, fAgua)}`, 10);
+    linha(`Xixi: ${xixisIdeal}x (ideal ${faixaXixiIdeal.min}-${faixaXixiIdeal.max}x) - ${statusFaixa(xixisIdeal, faixaXixiIdeal)}`, 10);
+    linha(`Cocô: ${cocosIdeal}x (ideal ${faixaCocoIdeal.min}-${faixaCocoIdeal.max}x) - ${statusFaixa(cocosIdeal, faixaCocoIdeal)}`, 10);
+  } else {
+    linha('Sem peso registrado para calcular o comparativo.', 10);
+  }
+  linha('Água tratada como piso mínimo (mais é protetor em DCR, não excesso). A Sênior 12+ não é dieta renal terapêutica.', 9, false, [140, 145, 168]);
+  espaco(4);
+
+  linha('Fontes científicas (revisadas por pares)', 13, true);
+  FONTES_CIENTIFICAS.forEach(fonte => linha(fonte, 9, false, [140, 145, 168]));
 
   doc.save(`fedora-relatorio-${dataRelatorio.toISOString().slice(0, 10)}.pdf`);
 }
