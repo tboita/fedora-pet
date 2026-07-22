@@ -8,6 +8,7 @@ import DateNav from '../components/DateNav';
 import ComparativoIdeal from '../components/ComparativoIdeal';
 import AlertaJejum from '../components/AlertaJejum';
 import { gerarRelatorioPDF } from '../lib/gerarPdf';
+import { gerarRelatorioSemanal, gerarRelatorioMensal } from '../lib/gerarPdfPeriodo';
 
 function ehHoje(data) {
   return data.toDateString() === new Date().toDateString();
@@ -18,6 +19,7 @@ export default function Hoje() {
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [ultimaAlimentacao, setUltimaAlimentacao] = useState(null);
+  const [baixandoPeriodo, setBaixandoPeriodo] = useState(null);
 
   async function carregarUltimaAlimentacao() {
     const { data } = await supabase.from('alimentacao').select('*')
@@ -86,6 +88,26 @@ export default function Hoje() {
     gerarRelatorioPDF({ ...dados, totalSecaConsumida, totalUmidaConsumida, totalComidaConsumida, totalAgua, totalAguaConsumida, dataRelatorio: dataSelecionada });
   }
 
+  async function baixarSemanal() {
+    setBaixandoPeriodo('semana');
+    try {
+      await gerarRelatorioSemanal();
+    } catch (e) {
+      console.error(e);
+    }
+    setBaixandoPeriodo(null);
+  }
+
+  async function baixarMensal() {
+    setBaixandoPeriodo('mes');
+    try {
+      await gerarRelatorioMensal();
+    } catch (e) {
+      console.error(e);
+    }
+    setBaixandoPeriodo(null);
+  }
+
   return (
     <div className="screen">
       <DateNav data={dataSelecionada} onChange={setDataSelecionada} />
@@ -138,10 +160,23 @@ export default function Hoje() {
           Relatório
           <span className="card-title-meta">{formatarData(dataSelecionada)}</span>
         </p>
-        <button className="btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+        <button className="btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10 }}
           onClick={baixarPdf}>
           <Download size={16} /> Baixar PDF deste dia
         </button>
+        <div className="btn-row">
+          <button className="btn-cancel" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+            disabled={baixandoPeriodo === 'semana'} onClick={baixarSemanal}>
+            <Download size={14} /> {baixandoPeriodo === 'semana' ? 'Gerando…' : 'Últimos 7 dias'}
+          </button>
+          <button className="btn-cancel" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+            disabled={baixandoPeriodo === 'mes'} onClick={baixarMensal}>
+            <Download size={14} /> {baixandoPeriodo === 'mes' ? 'Gerando…' : 'Últimos 30 dias'}
+          </button>
+        </div>
+        <p style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 8, marginBottom: 0 }}>
+          Os relatórios de 7 e 30 dias saem em formato de tabela, com médias diárias — bons pra levar ao veterinário.
+        </p>
       </div>
 
       <div className="card">

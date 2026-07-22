@@ -103,6 +103,16 @@ export function horasDesde(data) {
   return (new Date() - new Date(data)) / (1000 * 60 * 60);
 }
 
+// Combina o dia sendo visualizado (ex: um dia passado no histórico) com o
+// horário atual do relógio, para que novos registros feitos enquanto se
+// navega por um dia anterior caiam corretamente naquele dia.
+export function combinarDataComHoraAtual(data) {
+  const agora = new Date();
+  const combinado = new Date(data);
+  combinado.setHours(agora.getHours(), agora.getMinutes(), agora.getSeconds(), agora.getMilliseconds());
+  return combinado;
+}
+
 export function fimDoDia(data = new Date()) {
   const d = new Date(data);
   d.setHours(23, 59, 59, 999);

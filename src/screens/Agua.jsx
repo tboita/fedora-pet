@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Droplet, Check, Trash2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { formatarHora, inicioDoDia, fimDoDia, chaveDia, diasAtras, formatarDataCurta } from '../lib/frequencia';
+import { formatarHora, inicioDoDia, fimDoDia, chaveDia, diasAtras, formatarDataCurta, combinarDataComHoraAtual } from '../lib/frequencia';
 import { faixaAguaIdeal, statusFaixa } from '../lib/referencias';
 import DateNav from '../components/DateNav';
 import TendenciaChart from '../components/TendenciaChart';
@@ -76,6 +76,7 @@ export default function Agua({ onToast }) {
     e.preventDefault();
     if (!colocada) return;
     const { error } = await supabase.from('agua').insert({
+      registrado_em: combinarDataComHoraAtual(dataSelecionada).toISOString(),
       quantidade_colocada: Number(colocada),
       quantidade_restante: null,
       observacoes: obs || null,
@@ -199,32 +200,27 @@ export default function Agua({ onToast }) {
         <TendenciaChart dados={tendencia} cor="#64B5F6" />
       </div>
 
-      {visualizandoHoje ? (
-        <div className="card">
-          <p className="card-title">Nova porção</p>
-          <form onSubmit={salvar}>
-            <div className="field" style={{ marginBottom: 12 }}>
-              <label>Quantidade colocada (ml)</label>
-              <input type="number" inputMode="decimal" value={colocada}
-                onChange={e => setColocada(e.target.value)} placeholder="ex: 200" required />
-            </div>
-            <div className="field" style={{ marginBottom: 12 }}>
-              <label>Observações</label>
-              <textarea value={obs} onChange={e => setObs(e.target.value)} placeholder="opcional" />
-            </div>
-            <div className="btn-row">
-              <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
-              <button type="submit" className="btn-primary">Registrar</button>
-            </div>
-          </form>
-        </div>
-      ) : (
-        <div className="card">
-          <p className="empty-state" style={{ padding: 0 }}>
-            Visualizando um dia passado. Você pode editar ou excluir registros abaixo, mas novos registros só podem ser feitos em "Hoje".
-          </p>
-        </div>
-      )}
+      <div className="card">
+        <p className="card-title">
+          Nova porção
+          {!visualizandoHoje && <span className="card-title-meta">Será salva em {formatarDataCurta(dataSelecionada)}</span>}
+        </p>
+        <form onSubmit={salvar}>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label>Quantidade colocada (ml)</label>
+            <input type="number" inputMode="decimal" value={colocada}
+              onChange={e => setColocada(e.target.value)} placeholder="ex: 200" required />
+          </div>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label>Observações</label>
+            <textarea value={obs} onChange={e => setObs(e.target.value)} placeholder="opcional" />
+          </div>
+          <div className="btn-row">
+            <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
+            <button type="submit" className="btn-primary">Registrar</button>
+          </div>
+        </form>
+      </div>
 
       {abertos.length > 0 && (
         <div className="card">

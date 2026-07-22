@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Droplets, PawPrint, Trash2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { formatarHora, inicioDoDia, fimDoDia, chaveDia, diasAtras, formatarDataCurta } from '../lib/frequencia';
+import { formatarHora, inicioDoDia, fimDoDia, chaveDia, diasAtras, formatarDataCurta, combinarDataComHoraAtual } from '../lib/frequencia';
 import { faixaXixiIdeal, faixaCocoIdeal, statusFaixa } from '../lib/referencias';
 import DateNav from '../components/DateNav';
 import TendenciaChart from '../components/TendenciaChart';
@@ -76,6 +76,7 @@ export default function Necessidades({ onToast }) {
   async function salvar(e) {
     e.preventDefault();
     const { error } = await supabase.from('necessidades').insert({
+      registrado_em: combinarDataComHoraAtual(dataSelecionada).toISOString(),
       tipo,
       consistencia: tipo === 'coco' && consistencia ? consistencia : null,
       observacoes: obs || null,
@@ -187,50 +188,45 @@ export default function Necessidades({ onToast }) {
         <TendenciaChart dados={tendenciaCoco} cor="#7FDBA1" />
       </div>
 
-      {visualizandoHoje ? (
-        <div className="card">
-          <p className="card-title">Registrar</p>
-          <form onSubmit={salvar}>
-            <div className="btn-row" style={{ marginBottom: 12 }}>
-              <button type="button"
-                className={`btn-toggle ${tipo === 'xixi' ? 'active' : ''}`}
-                onClick={() => setTipo('xixi')}>
-                💧 Xixi
-              </button>
-              <button type="button"
-                className={`btn-toggle ${tipo === 'coco' ? 'active' : ''}`}
-                onClick={() => setTipo('coco')}>
-                💩 Cocô
-              </button>
-            </div>
+      <div className="card">
+        <p className="card-title">
+          Registrar
+          {!visualizandoHoje && <span className="card-title-meta">Será salvo em {formatarDataCurta(dataSelecionada)}</span>}
+        </p>
+        <form onSubmit={salvar}>
+          <div className="btn-row" style={{ marginBottom: 12 }}>
+            <button type="button"
+              className={`btn-toggle ${tipo === 'xixi' ? 'active' : ''}`}
+              onClick={() => setTipo('xixi')}>
+              💧 Xixi
+            </button>
+            <button type="button"
+              className={`btn-toggle ${tipo === 'coco' ? 'active' : ''}`}
+              onClick={() => setTipo('coco')}>
+              💩 Cocô
+            </button>
+          </div>
 
-            {tipo === 'coco' && (
-              <div className="field" style={{ marginBottom: 12 }}>
-                <label>Consistência</label>
-                <select value={consistencia} onChange={e => setConsistencia(e.target.value)}>
-                  <option value="">Selecionar</option>
-                  {CONSISTENCIAS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-            )}
-
+          {tipo === 'coco' && (
             <div className="field" style={{ marginBottom: 12 }}>
-              <label>Observações</label>
-              <textarea value={obs} onChange={e => setObs(e.target.value)} placeholder="opcional" />
+              <label>Consistência</label>
+              <select value={consistencia} onChange={e => setConsistencia(e.target.value)}>
+                <option value="">Selecionar</option>
+                {CONSISTENCIAS.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
-            <div className="btn-row">
-              <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
-              <button type="submit" className="btn-primary">Salvar</button>
-            </div>
-          </form>
-        </div>
-      ) : (
-        <div className="card">
-          <p className="empty-state" style={{ padding: 0 }}>
-            Visualizando um dia passado. Você pode editar ou excluir registros abaixo, mas novos registros só podem ser feitos em "Hoje".
-          </p>
-        </div>
-      )}
+          )}
+
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label>Observações</label>
+            <textarea value={obs} onChange={e => setObs(e.target.value)} placeholder="opcional" />
+          </div>
+          <div className="btn-row">
+            <button type="button" className="btn-cancel" onClick={limparForm}>Cancelar</button>
+            <button type="submit" className="btn-primary">Salvar</button>
+          </div>
+        </form>
+      </div>
 
       <div className="card">
         <p className="card-title">Histórico do dia</p>
