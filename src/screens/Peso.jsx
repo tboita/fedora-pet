@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { supabase } from '../lib/supabaseClient';
-import { formatarData } from '../lib/frequencia';
+import { formatarData, paraDatetimeLocal } from '../lib/frequencia';
 
 export default function Peso({ onToast }) {
   const [pesoKg, setPesoKg] = useState('');
   const [registros, setRegistros] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [editandoId, setEditandoId] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   async function carregar() {
     setCarregando(true);
@@ -16,6 +18,7 @@ export default function Peso({ onToast }) {
       .select('*')
       .order('registrado_em', { ascending: true });
     if (!error) setRegistros(data || []);
+    else { onToast?.(`Erro ao carregar: ${error.message}`); console.error(error); }
     setCarregando(false);
   }
 
@@ -47,6 +50,35 @@ export default function Peso({ onToast }) {
       carregar();
     } else {
       onToast?.(`Erro ao excluir: ${error.message}`);
+      console.error(error);
+    }
+  }
+
+  function iniciarEdicao(r) {
+    setEditandoId(r.id);
+    setEditForm({
+      peso_kg: r.peso_kg,
+      registrado_em: paraDatetimeLocal(r.registrado_em),
+    });
+  }
+
+  function cancelarEdicao() {
+    setEditandoId(null);
+    setEditForm({});
+  }
+
+  async function salvarEdicao(id) {
+    if (!editForm.peso_kg) return;
+    const { error } = await supabase.from('peso').update({
+      peso_kg: Number(editForm.peso_kg),
+      registrado_em: new Date(editForm.registrado_em).toISOString(),
+    }).eq('id', id);
+    if (!error) {
+      onToast?.('Peso atualizado');
+      cancelarEdicao();
+      carregar();
+    } else {
+      onToast?.(`Erro ao atualizar: ${error.message}`);
       console.error(error);
     }
   }
@@ -112,13 +144,37 @@ export default function Peso({ onToast }) {
           <p className="card-title">Histórico</p>
           <div className="entry-list">
             {[...registros].reverse().slice(0, 10).map(r => (
-              <div key={r.id} className="entry-row">
-                <span className="entry-time">{formatarData(r.registrado_em)}</span>
-                <span className="mono" style={{ flex: 1, marginLeft: 10 }}>{r.peso_kg}kg</span>
-                <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
-                  <Trash2 size={14} />
-                </button>
-              </div>
+              editandoId === r.id ? (
+                <div key={r.id} className="pending-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+                  <div className="field-row" style={{ marginBottom: 0 }}>
+                    <div className="field">
+                      <label>Peso (kg)</label>
+                      <input type="number" step="0.01" value={editForm.peso_kg}
+                        onChange={e => setEditForm(f => ({ ...f, peso_kg: e.target.value }))} />
+                    </div>
+                    <div className="field">
+                      <label>Data e hora</label>
+                      <input type="datetime-local" value={editForm.registrado_em}
+                        onChange={e => setEditForm(f => ({ ...f, registrado_em: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="btn-row">
+                    <button type="button" className="btn-cancel" onClick={cancelarEdicao}>Cancelar</button>
+                    <button type="button" className="btn-primary" onClick={() => salvarEdicao(r.id)}>Salvar</button>
+                  </div>
+                </div>
+              ) : (
+                <div key={r.id} className="entry-row">
+                  <span className="entry-time">{formatarData(r.registrado_em)}</span>
+                  <span className="mono" style={{ flex: 1, marginLeft: 10 }}>{r.peso_kg}kg</span>
+                  <button className="btn-icon-danger" onClick={() => iniciarEdicao(r)} title="Editar">
+                    <Pencil size={14} />
+                  </button>
+                  <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              )
             ))}
           </div>
         </div>

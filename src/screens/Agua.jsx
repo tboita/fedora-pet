@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Droplet, Check, Trash2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { formatarHora, inicioDoDia, fimDoDia, chaveDia, diasAtras, formatarDataCurta, combinarDataComHoraAtual } from '../lib/frequencia';
+import { formatarHora, inicioDoDia, fimDoDia, chaveDia, diasAtras, formatarDataCurta, combinarDataComHoraAtual, paraDatetimeLocal } from '../lib/frequencia';
 import { faixaAguaIdeal, statusFaixa } from '../lib/referencias';
 import DateNav from '../components/DateNav';
 import TendenciaChart from '../components/TendenciaChart';
@@ -125,6 +125,7 @@ export default function Agua({ onToast }) {
       quantidade_colocada: r.quantidade_colocada,
       quantidade_restante: r.quantidade_restante ?? '',
       observacoes: r.observacoes || '',
+      registrado_em: paraDatetimeLocal(r.registrado_em),
     });
   }
 
@@ -138,6 +139,7 @@ export default function Agua({ onToast }) {
       quantidade_colocada: Number(editForm.quantidade_colocada),
       quantidade_restante: editForm.quantidade_restante === '' ? null : Number(editForm.quantidade_restante),
       observacoes: editForm.observacoes || null,
+      registrado_em: new Date(editForm.registrado_em).toISOString(),
     }).eq('id', id);
     if (!error) {
       onToast?.('Registro atualizado');
@@ -281,6 +283,11 @@ export default function Agua({ onToast }) {
                   </div>
                   <textarea value={editForm.observacoes}
                     onChange={e => setEditForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="observações" />
+                  <div className="field">
+                    <label>Data e hora</label>
+                    <input type="datetime-local" value={editForm.registrado_em}
+                      onChange={e => setEditForm(f => ({ ...f, registrado_em: e.target.value }))} />
+                  </div>
                   <div className="btn-row">
                     <button type="button" className="btn-cancel" onClick={cancelarEdicao}>Cancelar</button>
                     <button type="button" className="btn-primary" onClick={() => salvarEdicao(r.id)}>Salvar</button>

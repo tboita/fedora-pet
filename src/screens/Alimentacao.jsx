@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Fish, Check, Trash2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { formatarHora, inicioDoDia, fimDoDia, chaveDia, diasAtras, formatarDataCurta, combinarDataComHoraAtual } from '../lib/frequencia';
+import { formatarHora, inicioDoDia, fimDoDia, chaveDia, diasAtras, formatarDataCurta, combinarDataComHoraAtual, paraDatetimeLocal } from '../lib/frequencia';
 import { faixaRacaoSecaIdeal, statusFaixa } from '../lib/referencias';
 import DateNav from '../components/DateNav';
 import TendenciaChart from '../components/TendenciaChart';
@@ -138,6 +138,7 @@ export default function Alimentacao({ onToast }) {
       quantidade_restante: r.quantidade_restante ?? '',
       tipo: r.tipo || 'seca',
       observacoes: r.observacoes || '',
+      registrado_em: paraDatetimeLocal(r.registrado_em),
     });
   }
 
@@ -152,11 +153,13 @@ export default function Alimentacao({ onToast }) {
       quantidade_restante: editForm.quantidade_restante === '' ? null : Number(editForm.quantidade_restante),
       tipo: editForm.tipo,
       observacoes: editForm.observacoes || null,
+      registrado_em: new Date(editForm.registrado_em).toISOString(),
     }).eq('id', id);
     if (!error) {
       onToast?.('Registro atualizado');
       cancelarEdicao();
       carregar();
+      carregarUltimaAlimentacao();
     } else {
       onToast?.(`Erro ao atualizar: ${error.message}`);
       console.error(error);
@@ -317,6 +320,11 @@ export default function Alimentacao({ onToast }) {
                   </div>
                   <textarea value={editForm.observacoes}
                     onChange={e => setEditForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="observações" />
+                  <div className="field">
+                    <label>Data e hora</label>
+                    <input type="datetime-local" value={editForm.registrado_em}
+                      onChange={e => setEditForm(f => ({ ...f, registrado_em: e.target.value }))} />
+                  </div>
                   <div className="btn-row">
                     <button type="button" className="btn-cancel" onClick={cancelarEdicao}>Cancelar</button>
                     <button type="button" className="btn-primary" onClick={() => salvarEdicao(r.id)}>Salvar</button>

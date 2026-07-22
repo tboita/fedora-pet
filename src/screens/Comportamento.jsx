@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { formatarDataHora } from '../lib/frequencia';
+import { formatarDataHora, paraDatetimeLocal } from '../lib/frequencia';
 
 export default function Comportamento({ onToast }) {
   const [nota, setNota] = useState('');
   const [registros, setRegistros] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [editandoId, setEditandoId] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   async function carregar() {
     setCarregando(true);
@@ -16,6 +18,7 @@ export default function Comportamento({ onToast }) {
       .order('registrado_em', { ascending: false })
       .limit(30);
     if (!error) setRegistros(data || []);
+    else { onToast?.(`Erro ao carregar: ${error.message}`); console.error(error); }
     setCarregando(false);
   }
 
@@ -51,6 +54,35 @@ export default function Comportamento({ onToast }) {
     }
   }
 
+  function iniciarEdicao(r) {
+    setEditandoId(r.id);
+    setEditForm({
+      observacoes: r.observacoes,
+      registrado_em: paraDatetimeLocal(r.registrado_em),
+    });
+  }
+
+  function cancelarEdicao() {
+    setEditandoId(null);
+    setEditForm({});
+  }
+
+  async function salvarEdicao(id) {
+    if (!editForm.observacoes.trim()) return;
+    const { error } = await supabase.from('comportamento').update({
+      observacoes: editForm.observacoes.trim(),
+      registrado_em: new Date(editForm.registrado_em).toISOString(),
+    }).eq('id', id);
+    if (!error) {
+      onToast?.('Nota atualizada');
+      cancelarEdicao();
+      carregar();
+    } else {
+      onToast?.(`Erro ao atualizar: ${error.message}`);
+      console.error(error);
+    }
+  }
+
   return (
     <div className="screen">
       <div className="card">
@@ -77,15 +109,36 @@ export default function Comportamento({ onToast }) {
         ) : (
           <div className="entry-list">
             {registros.map(r => (
-              <div key={r.id} className="entry-row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 4 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                  <span className="entry-time">{formatarDataHora(r.registrado_em)}</span>
-                  <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
-                    <Trash2 size={14} />
-                  </button>
+              editandoId === r.id ? (
+                <div key={r.id} className="pending-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+                  <div className="field">
+                    <label>Data e hora</label>
+                    <input type="datetime-local" value={editForm.registrado_em}
+                      onChange={e => setEditForm(f => ({ ...f, registrado_em: e.target.value }))} />
+                  </div>
+                  <textarea value={editForm.observacoes}
+                    onChange={e => setEditForm(f => ({ ...f, observacoes: e.target.value }))} />
+                  <div className="btn-row">
+                    <button type="button" className="btn-cancel" onClick={cancelarEdicao}>Cancelar</button>
+                    <button type="button" className="btn-primary" onClick={() => salvarEdicao(r.id)}>Salvar</button>
+                  </div>
                 </div>
-                <span>{r.observacoes}</span>
-              </div>
+              ) : (
+                <div key={r.id} className="entry-row" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <span className="entry-time">{formatarDataHora(r.registrado_em)}</span>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button className="btn-icon-danger" onClick={() => iniciarEdicao(r)} title="Editar">
+                        <Pencil size={14} />
+                      </button>
+                      <button className="btn-icon-danger" onClick={() => excluir(r.id)} title="Excluir">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <span>{r.observacoes}</span>
+                </div>
+              )
             ))}
           </div>
         )}
